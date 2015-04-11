@@ -1,7 +1,7 @@
 {
   "name": "syyundong_nodejs",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "start": "node ./bin/www"
   },
@@ -13,5 +13,19 @@
     "jade": "~1.9.2",
     "morgan": "~1.5.1",
     "serve-favicon": "~2.2.0"
+  },
+  "nodejs": true,
+  "node-main": "./bin/www",
+  "main": "http://localhost:3000/",
+  "window": {
+    "title": "node-webkit demo",
+    "icon": "link.png",
+    "toolbar": true,
+    "width": 800,
+    "height": 500,
+    "min_width": 400,
+    "min_height": 200,
+    "max_width": 800,
+    "max_height": 600
   }
 }
