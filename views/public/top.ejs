@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+    <meta name="author" content="www.syyundong.com"/>
+    <meta name="Copyright" content="www.syyundong.com"/>
+    <meta name="Description" content="爱约赛|爱运动 爱约赛|首页 爱约赛致力于打造中国最大的体育健康互动平台，以互联网和移动互联网体育赛事服务、体育社交、体育线上线下互动业务为核心，形成新一代参与型大众体育健康消费的互联网新入口。"/>
+    <meta name="Keywords" content="爱约赛|爱运动 爱约赛 |首页 约活动 发布活动 发布赛事 赛事报名 马拉松 四季跑 社交 场馆 "/>
+    <title>爱约赛|爱运动 爱约赛|首页</title>
+
+    <link type="text/css" rel="stylesheet" href="/public/css/common.min.css">
+    <link type="text/css" rel="stylesheet" href="/public/css/public.css">
+    <link type="text/css" rel="stylesheet" href="/public/css/zm.css">
+    <link type="text/css" rel="stylesheet" href="/public/css/admin.css">
+
+    <script type="text/javascript" src="/public/js/lib/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/public/js/lib/jquery.validate.js"></script>
+    <script type="text/javascript" src="/public/js/lib/bootstrap.js"></script>
+    <script type="text/javascript" src="/public/js/plugins/dialog.min.js"></script>
+    <script type="text/javascript" src="/public/js/common.js"></script>
+    <script type="text/javascript" src="/public/js/loader.js"></script>
+</head>
+<body>
+
+<div id="header" class="clearfix">
+    <div class="header-head">
+        <div class="container clearfix" data-selector="headerHead">
+            <div id="NTGUID__2"><div class="pull-left">
+                    <a href="__APP__/login/login.html">登录</a>
+                    <a href="__APP__/register">注册</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="header-body">
+        <div class="container clearfix" id="header-body">
+            <a href="__APP__"><img src="/public/images/default/logo.png" class="logo" alt="爱约赛" /></a>
+            <div id="i_user_center" class="pull-right user-info" data-selector="userCenterInfo">
+                <table>
+                    <tbody>
+                    <tr>
+                        <th><a href="/userCenter/timeline"><img src="http://static.wisdom-china.cn//images/1/7026/5155/6160/d0bc19728943e09ba394210c04a533a1_2_60x60.png?140x140" name="user-head"></a></th>
+                        <td><a href="/userCenter/game"> <span>2</span><br> <em>赛事</em>
+                            </a> <i></i> <a href="/userCenter/activity"> <span>2</span><br> <em>活动</em>
+                            </a> <i></i> <a href="/userCenter/topic"> <span name="user-topic">0</span><br> <em>话题</em>
+                            </a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="header-adwrap" data-selector="headerAdv"></div>
+            <h4 id="header-title">登录</h4>
+        </div>
+    </div>
+    <div class="header-nav">
+        <div class="container clearfix">
+            <div id="navigation">
+                <a href="javascript:;" class="navigation-title">全部赛事活动<i></i></a>
+
+                <ul class="navigation-list">
+                    <% games.forEach(function(game){ %>
+                        <li class="navigation-item">
+                            <div class="navigation-item-static">
+                                <dl>
+                                    <dt><%= game.name %></dt>
+                                    <dd>
+                                    <% game.child.forEach(function(child){
+                                        if(child['sport_show'] == 1) {
+                                    %>
+                                        <a href="/Game?keyword=<%= child.name%>"><%= child.name%></a>
+                                    <%
+                                        }
+                                    })%>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="navigation-item-content">
+                                <ul>
+                                <% game.child.forEach(function(child){%>
+                                    <li><a href="/Game?keyword=<%= child.name%>"><%= child.name%></a></li>
+                                <% })%>
+                                </ul>
+                            </div>
+                        </li>
+                    <% }); %>
+                </ul>
+                <!-- && end -->
+            </div>
+            <div id="site-navigation">
+                <ul class="site-navigation-list clearfix">
+                    <li class="site-navigation-item"><a href="/" class="menu-root <% if(groupName == '/') {%>current<%}%>">首页</a></li>
+                    <li class="site-navigation-item"><a href="__APP__/Game" class="menu-root <% if(groupName == '/game') {%>current<%}%>" >赛事</a></li>
+                    <li class="site-navigation-item"><a href="__APP__/Activity" class="menu-root <% if(groupName == '/activity') {%>current<%}%>">约活动</a></li>
+                    <li class="site-navigation-item"><a href="__APP__/Friends" class="menu-root <% if(groupName == '/friends') {%>current<%}%>">赛友圈</a></li>
+                    <li class="site-navigation-item"><a href="__APP__/Venue" class="menu-root <% if(groupName == '/venue') {%>current<%}%>">场馆</a></li>
+                    <li class="site-navigation-item"><a href="__APP__/association" class="menu-root <% if(groupName == '/association') {%>current<%}%>">体育协会</a></li>
+                    <li class="site-navigation-item"><a href="__APP__/hall" class="menu-root <% if(groupName == '/hall') {%>current<%}%>">名人堂</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
