@@ -2,6 +2,7 @@ exports.Sport = function() {
     var games = [];
     var activities = [];
     var venues = [];
+    var pidGames = {};
 
     this.initData = function(data) {
         var length = data.length;
@@ -28,6 +29,10 @@ exports.Sport = function() {
                 venues.push(row);
             }
         }
+
+        for(i = 0; i < games.length; i++) {
+            pidGames[games[i]['id'] + ''] = games[i].child;
+        }
     };
 
     this.getGames = function() {
@@ -41,4 +46,8 @@ exports.Sport = function() {
     this.getVenues = function() {
         return venues;
     };
+
+    this.getGamesByPid = function(pid) {
+        return pidGames[pid + ''];
+    }
 };

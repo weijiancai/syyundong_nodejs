@@ -45,6 +45,17 @@ var DBO = {
      */
     getBannerImages: function(callback) {
         db.query('SELECT * FROM v_banner_images', callback);
+    },
+    /**
+     * 获得赛事分类下的所有赛事
+     *
+     * @param pid
+     * @param callback
+     */
+    getGames: function(pid, callback) {
+        this.getSports(function(sports) {
+            callback(sports.getGamesByPid(pid));
+        });
     }
 };
 
