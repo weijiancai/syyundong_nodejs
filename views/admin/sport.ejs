@@ -24,7 +24,7 @@
                                     </div>
                                 </div>
                                 <div class="portlet-body">
-                                    <ul class="ver-inline-menu tabbable margin-bottom-25 list-group">
+                                    <ul class="ver-inline-menu tabbable margin-bottom-25 list-group" id="sportCategoryUl">
                                         <% for(var i = 0; i < games.length; i++) { var game = games[i];%>
                                         <li class="list-group-item <%= (i == 0) ? 'active' : ''%>" style="line-height: 40px;">
                                             <a href="javascript:void(0);" data-value="<%= game.id %>" style="padding-left: 10px;"><%= game.name %>
@@ -73,7 +73,7 @@
 
                 <div class="tab-pane" id="sport_1_2">
                     <div class="scroller" data-height="590px" data-always-visible="1" data-rail-visible1="1">
-                        aa
+                        <div id="TestForm"></div>
                     </div>
                 </div>
 

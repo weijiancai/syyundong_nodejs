@@ -17,6 +17,7 @@ $(function() {
         $('#pageTile').text($now.text());
     });
 
+    // 运动项目
     var sportTable = new MU.ui.DataTable($('#sportTable'));
     sportTable.setColumns([
         {data: 'id', title: 'ID'},
@@ -26,5 +27,16 @@ $(function() {
         {data: 'input_user', title: '录入人'}
     ]);
     sportTable.showPaginate(false);
-    sportTable.query('/admin/getGames', {pid: 1});
+    sportTable.setUrl('/admin/getGames');
+
+    // 分类
+    var $sportCategoryUl = $('#sportCategoryUl');
+    var firstSportCategory = $sportCategoryUl.find('li').click(function() {
+        $sportCategoryUl.find('li').removeClass('active').find('span.after').remove();
+        $(this).addClass('active').append('<span class="after"></span>');
+        sportTable.query({pid: $(this).find('a').data('value')});
+    }).eq(0).find('a').data('value');
+    sportTable.query({pid: firstSportCategory});
+
+    $('#TestForm').append(sportTable.genForm(5, ['name']));
 });

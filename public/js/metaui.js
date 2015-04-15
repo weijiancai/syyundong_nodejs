@@ -38,7 +38,7 @@ MU.ui = {
      * @constructor
      */
     DataTable: function($container) {
-        //var dt = $container.dataTable();
+        var dt, self = this;
         var option = {
             "searching": false,
             "lengthChange": false,
@@ -49,7 +49,8 @@ MU.ui = {
             //"paginationType": "bootstrap",
             //"scrollX": true,
             "columns": [],
-            "ajax": {url: '', type: 'POST', data: {}},
+            //"ajax": {url: '', type: 'POST', data: {}},
+            "retrieve": true,
             "initComplete": function(setting) {
                 $container.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
                 $container.find("select, input, a.button, button").uniform();
@@ -81,6 +82,10 @@ MU.ui = {
             option.searching = isShow;
         };
 
+        this.setUrl = function(url) {
+            option.url = url;
+        };
+
         this.setColumns = function(columns) {
             columns.unshift({
                 "render": function ( data, type, row ) {
@@ -97,14 +102,48 @@ MU.ui = {
             option.columns = columns;
         };
 
-        this.loadData = function(data) {
-            $container.dataTable({data: data});
+        this.initDataTable = function() {
+            if (!dt) {
+                dt = $container.DataTable(option);
+            }
         };
 
-        this.query = function(url, params) {
-            option.ajax.url = url;
-            option.ajax.data = params;
-            $container.dataTable(option);
+        this.loadData = function(data) {
+            this.initDataTable();
+            dt.clear();
+            dt.rows.add(data.data ? data.data : data).draw();
+        };
+
+        this.query = function(params) {
+            this.initDataTable();
+            $.post(option.url, params, function(data) {
+                self.loadData(data);
+            });
+        };
+
+        this.genForm = function(colCount, columnNames) {
+            var $table = $('<table></table>');
+            var $tr = $('<tr></tr>').appendTo($table);
+            var count = 0;
+            for(var i = 1; i < option.columns.length; i++) {
+                var column = option.columns[i];
+                if(columnNames && columnNames.length > 0 && $.inArray(column.data, columnNames) < 0) {
+                    continue;
+                }
+
+                if(count == colCount) {
+                    $tr = $('<tr></tr>').appendTo($table);
+                    count = 0;
+                }
+
+                var $td = $('<td></td>').appendTo($tr);
+                var $label = $('<label></label>').text(column.title).appendTo($td);
+                $('<input type="text">').appendTo($td);
+
+                count++;
+            }
+
+            return $table;
         }
     }
 };
