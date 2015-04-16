@@ -121,29 +121,333 @@ MU.ui = {
             });
         };
 
-        this.genForm = function(colCount, columnNames) {
-            var $table = $('<table></table>');
-            var $tr = $('<tr></tr>').appendTo($table);
-            var count = 0;
-            for(var i = 1; i < option.columns.length; i++) {
-                var column = option.columns[i];
-                if(columnNames && columnNames.length > 0 && $.inArray(column.data, columnNames) < 0) {
-                    continue;
-                }
+        this.getOption = function() {
+            return option;
+        };
+    }
+};
+/* 常量 */
+// 表单类型
+MU.C_FT_EDIT = 0;
+MU.C_FT_QUERY = 1;
+// 显示风格
+MU.C_DS_TEXT = 0;
+MU.C_DS_TEXT_AREA = 1;
+MU.C_DS_PASSWORD = 2;
+MU.C_DS_COMBO_BOX = 3;
+// 数据类型
+MU.C_DT_STRING = 0;
+MU.C_DT_INTEGER = 1;
+MU.C_DT_DOUBLE = 2;
+MU.C_DT_NUMBER = 3;
+MU.C_DT_DATE = 4;
+MU.C_DT_EMAIL = 5;
+MU.C_DT_IP = 6;
+MU.C_DT_URL = 7;
+// 查询模式
+MU.C_QM_EQUAL = 0;
+MU.C_QM_NOT_EQUAL = 1;
+MU.C_QM_LESS_THAN = 2;
+MU.C_QM_LESS_EQUAL = 3;
+MU.C_QM_GREATER_THAN = 4;
+MU.C_QM_GREATER_EQUAL = 5;
+MU.C_QM_BETWEEN = 6;
+MU.C_QM_LIKE = 7;
+MU.C_QM_LEFT_LIKE = 8;
+MU.C_QM_RIGHT_LIKE = 9;
 
-                if(count == colCount) {
-                    $tr = $('<tr></tr>').appendTo($table);
-                    count = 0;
-                }
 
-                var $td = $('<td></td>').appendTo($tr);
-                var $label = $('<label></label>').text(column.title).appendTo($td);
-                $('<input type="text">').appendTo($td);
+MU.ui.DataForm = function() {
+    this.id = null;
+    this.name = null;
+    this.formType = MU.C_FT_EDIT;
+    this.colCount = 3;
+    this.colWidth = 185;
+    this.labelGap = 5;
+    this.fieldGap = 5;
+    this.hgap = null;
+    this.vgap = null;
+    this.fieldList = [];
+    this.fieldset = null;
+    this.actionBar = null;
+    this.width = null;
+    this.height = null;
+    this.includeFields = [];
 
-                count++;
+    var self = this;
+
+    this.genByDataTable = function(dt) {
+        var columns = dt.getOption().columns;
+        var fieldList = this.fieldList;
+        for(var i = 0; i < columns.length; i++) {
+            var column = columns[i];
+            fieldList.push({name: column.data, displayName: column.title});
+        }
+
+        return this.gen();
+    };
+
+    this.gen = function() {
+        var formGrid = new MU.ui.GuidePane(this.hgap, this.vgap);
+
+        var idxRow = 0; // 行号
+        var idxCol = 0; // 列号
+        var fieldList = this.fieldList;
+        var field;
+        for(var i = 1; i < fieldList.length; i++) {
+            field = fieldList[i];
+            if(this.includeFields && this.includeFields.length > 0 && $.inArray(field.name, this.includeFields) < 0) {
+                continue;
             }
 
-            return $table;
+            if(field.isSingleLine) {
+                idxRow++;
+                formGrid.add(getLabelTd(field, this.formType), idxRow, 0);
+                formGrid.add(getGapTd(this.labelGap), idxRow, 1);
+                formGrid.add(getInputNode(field, this.colCount), idxRow, 2);
+                idxCol = 0;
+                idxRow++;
+                this.height += field.height;
+
+                continue;
+            }
+
+            formGrid.add(getLabelTd(field, this.formType), idxRow, idxCol++);
+            formGrid.add(getGapTd(this.labelGap), idxRow, idxCol++);
+            formGrid.add(getInputNode(field, this.colCount), idxRow, idxCol++);
+
+            if(this.colCount == 1) {
+                idxCol = 0;
+                idxRow++;
+            } else {
+                if(idxCol == this.colCount * 4 - 1) {
+                    idxCol = 0;
+                    idxRow++;
+                } else {
+                    formGrid.add(getGapTd(this.fieldGap), idxRow, idxCol++);
+                }
+            }
+
+            return formGrid.gen();
         }
+
+        function getInputNode(field, colCount) {
+            if(MU.C_DS_TEXT_AREA == field.displayStyle) {
+                if(field.isSingleLine) {
+                    return getFormInputTd(field, 'textarea', colCount * 4 - 3);
+                } else {
+                    return getFormInputTd(field, 'textarea');
+                }
+            } else if(MU.C_DS_PASSWORD == field.displayStyle) {
+                if(field.isSingleLine) {
+                    return getFormInputTd(field, 'password', colCount * 4 - 3);
+                } else {
+                    return getFormInputTd(field, 'password');
+                }
+            } else if(MU.C_DS_COMBO_BOX == field.displayStyle) {
+                if(field.isSingleLine) {
+                    return getFormInputTd(field, 'select', colCount * 4 - 3);
+                } else {
+                    return getFormInputTd(field, 'select');
+                }
+            } else {
+                if(MU.C_DT_DATE == field.dataType) {
+                    return getFormInputTd(field, 'date');
+                } else if(MU.C_DT_DOUBLE == field.dataType) {
+                    return getFormInputTd(field, "double");
+                } else if(MU.C_DT_INTEGER == field.dataType) {
+                    return getFormInputTd(field, "int");
+                } else if(MU.C_DT_NUMBER == field.dataType) {
+                    return getFormInputTd(field, "number");
+                } else if(MU.C_DT_URL == field.dataType) {
+                    return getFormInputTd(field, "url");
+                } else if(MU.C_DT_IP == field.dataType) {
+                    return getFormInputTd(field, "ip");
+                } else if(MU.C_DT_EMAIL == field.dataType) {
+                    return getFormInputTd(field, "email");
+                } else {
+                    if(field.isSingleLine) {
+                        return getFormInputTd(field, 'text', colCount * 4 - 3);
+                    } else {
+                        return getFormInputTd(field, 'text');
+                    }
+                }
+            }
+        }
+
+        function getGap(width) {
+            return $('<span style="display: block"></span>').css({width: width + 'px'});
+        }
+
+        function getGapTd(width) {
+            return $('<td></td>').append(getGap(width));
+        }
+
+        function getHGap(colspan, hGap) {
+            return $('<td></td>').attr('colspan', colspan).css({height: hGap + 'px'});
+        }
+
+
+        function getLabelTd(field, formType) {
+            return $('<td></td>').append(getLabel(field, formType));
+        }
+
+        function getFormInputTd(field, type, colspan, rowspan) {
+            var $td = $('<td></td>');
+            if(colspan) {
+                $td.attr('colspan', colspan);
+                field.width = '100%';
+            }
+            if(rowspan) {
+                $td.attr('rowspan', rowspan);
+            }
+            return $td.append(getFormInput(field, type));
+        }
+
+
+        function getLabel(field) {
+            var $label = $('<label style="display: block;"></label>').attr('for', field.name).text(field.displayName);
+            if(field.required && self.formType == MU.C_FT_EDIT) {
+                $label.append('<span class="span_required">*</span>');
+            }
+
+            return $label;
+        }
+
+        function getFormInput(field, type) {
+            var inputName;
+            /*if(tableFieldMapping && tableFieldMapping[field.name]) {
+                inputName = tableFieldMapping[field.name];
+            } else {
+                inputName = field.colName;
+            }*/
+            inputName = field.colName;
+
+            var styleStr = "";
+            if(field.width) {
+                if('100%' == field.width) {
+                    styleStr += "width:" + field.width + ";";
+                } else {
+                    if('date' == type && self.formType == MU.MU.C_FT_QUERY) {
+                        styleStr += "width:" + (field.width/2 - 10) + "px;";
+                    } else {
+                        styleStr += "width:" + field.width + "px;";
+                    }
+                }
+            }
+            if(field.height) {
+                styleStr += "height:" + field.height + "px;";
+            }
+            var options = '<option value=""> </option>';
+            if(field.dictList) {
+                for(var i = 0; i < field.dictList.length; i++) {
+                    options += '<option value="' + field.dictList[i].value +'">' + field.dictList[i].name+ '</option>'
+                }
+            }
+
+            var attr = '';
+            var styleClass = '';
+            if(field.readonly) {
+                attr += ' readonly="readonly"';
+            }
+            if(field.required) {
+                attr += ' missingMessage="必填" invalidMessage="请输入"';
+                styleClass += ' required';
+            }
+
+            if('textarea' == type) {
+                return '<textarea id="' + field.name + '" type="' + type + '" name="' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '"></textarea>';
+            } else if('select' == type) {
+                return '<select id="' + field.name + '" type="' + type + '" name="' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '">' + options + '</select>';
+            } else if('date' == type || 'email' == type || 'ip' == type || 'url' == type || 'int' == type || 'double' == type || 'number' == type) {
+                if('date' == type) {
+                    styleClass += ' dateField';
+                    if(self.formType == MU.C_FT_QUERY) {
+                        return '<input id="' + field.name + '" type="text" name="D_start' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '" queryMode="' + MU.C_QM_GREATER_EQUAL + '"/>&nbsp;至&nbsp;' +
+                            '<input id="' + field.name + '" type="text" name="D_end' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '" queryMode="' + MU.C_QM_LESS_THAN + '"/>';
+                    }
+                } else if('email' == type) {
+                    styleClass += ' email';
+                } else if('ip' == type) {
+                    styleClass += ' ip';
+                } else if('url' == type) {
+                    styleClass += ' url';
+                } else if('int' == type) {
+                    styleClass += ' int';
+                } else if('double' == type) {
+                    styleClass += ' double';
+                } else if('number' == type) {
+                    styleClass += ' number';
+                }
+
+                type = 'text';
+            }
+
+            var queryMode = '';
+
+            if(self.formType == MU.C_FT_QUERY) {
+                queryMode = getQueryModeLink(field.queryMode);
+            }
+
+            return '<input id="' + field.name + '" type="' + type + '" name="' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '" queryMode="' + field.queryMode + '"/>' + queryMode;
+        }
+
+        /**
+         * 获得查询模式超链接
+         *
+         * @param queryMode
+         */
+        function getQueryModeLink(queryMode) {
+            switch (queryMode) {
+                case 0:
+                    return '<a href="#" class="queryMode equal">=</a>';
+                case 1:
+                    return '<a href="#" class="queryMode equal">&lt;&gt;</a>';
+                case 2:
+                    return '<a href="#" class="queryMode equal">&lt;</a>';
+                case 3:
+                    return '<a href="#" class="queryMode equal">&lt;=</a>';
+                case 4:
+                    return '<a href="#" class="queryMode equal">&gt;</a>';
+                case 5:
+                    return '<a href="#" class="queryMode equal">&gt;=</a>';
+                case 6:
+                    return '<a href="#" class="queryMode equal">=</a>';
+                case 7:
+                    return '<a href="#" class="queryMode equal">%%</a>';
+                case 8:
+                    return '<a href="#" class="queryMode equal">*%</a>';
+                case 9:
+                    return '<a href="#" class="queryMode equal">%*</a>';
+                default:
+                    return '<a href="#" class="queryMode equal">=</a>';
+            }
+        }
+    }
+};
+
+MU.ui.GuidePane = function(hgap, vgap) {
+    var table = [];
+
+    this.add = function(node, row, col) {
+        var array = table[row];
+        if(!(array && array.length)) {
+            array = [];
+            table[row] = array;
+        }
+        array[col] = node;
+    };
+
+    this.gen = function() {
+        var $table = $('<table class="gridPane"></table>');
+        for(var i = 0; i < table.length; i++) {
+            var tr = table[i];
+            var $tr = $('<tr></tr>').appendTo($table);
+            for(var j = 0; j < tr.length; j++) {
+                $tr.append($(tr[j]));
+            }
+        }
+
+        return $table;
     }
 };

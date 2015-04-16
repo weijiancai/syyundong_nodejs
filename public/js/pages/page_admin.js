@@ -38,5 +38,8 @@ $(function() {
     }).eq(0).find('a').data('value');
     sportTable.query({pid: firstSportCategory});
 
-    $('#TestForm').append(sportTable.genForm(5, ['name']));
+    var form = new MU.ui.DataForm();
+    form.includeFields = ['name'];
+    form.colCount = 5;
+    $('#TestForm').append(form.genByDataTable(sportTable));
 });
