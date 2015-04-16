@@ -41,5 +41,11 @@ $(function() {
     var form = new MU.ui.DataForm();
     form.includeFields = ['name'];
     form.colCount = 5;
-    $('#TestForm').append(form.genByDataTable(sportTable));
+    form.fieldList = [
+        {name: 'name', displayName: '赛事分类：', required: true}
+    ];
+    $('#TestForm').append(form.gen());
+    $('#btnTestSubmit').click(function() {
+        form.submit();
+    });
 });

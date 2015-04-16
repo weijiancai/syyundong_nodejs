@@ -175,11 +175,16 @@ MU.ui.DataForm = function() {
     this.includeFields = [];
 
     var self = this;
+    var $form;
+
+    this.submit = function() {
+        $form.submit();
+    };
 
     this.genByDataTable = function(dt) {
         var columns = dt.getOption().columns;
         var fieldList = this.fieldList;
-        for(var i = 0; i < columns.length; i++) {
+        for(var i = 1; i < columns.length; i++) {
             var column = columns[i];
             fieldList.push({name: column.data, displayName: column.title});
         }
@@ -193,8 +198,8 @@ MU.ui.DataForm = function() {
         var idxRow = 0; // 行号
         var idxCol = 0; // 列号
         var fieldList = this.fieldList;
-        var field;
-        for(var i = 1; i < fieldList.length; i++) {
+        var field, rules = {};
+        for(var i = 0; i < fieldList.length; i++) {
             field = fieldList[i];
             if(this.includeFields && this.includeFields.length > 0 && $.inArray(field.name, this.includeFields) < 0) {
                 continue;
@@ -228,8 +233,29 @@ MU.ui.DataForm = function() {
                 }
             }
 
-            return formGrid.gen();
+            if(field.required) {
+                rules[field.name] = 'required';
+            }
+            if(MU.C_DT_DATE == field.dataType) {
+                rules[field.name] = 'date';
+            } else if(MU.C_DT_DOUBLE == field.dataType) {
+                rules[field.name] = 'number';
+            } else if(MU.C_DT_INTEGER == field.dataType) {
+                rules[field.name] = 'number';
+            } else if(MU.C_DT_NUMBER == field.dataType) {
+                rules[field.name] = 'number';
+            } else if(MU.C_DT_URL == field.dataType) {
+                rules[field.name] = 'url';
+            } else if(MU.C_DT_IP == field.dataType) {
+                rules[field.name] = 'ip';
+            } else if(MU.C_DT_EMAIL == field.dataType) {
+                rules[field.name] = 'email';
+            }
         }
+
+        $form = $('<form></form>').append(formGrid.gen());
+        $form.validate({rules: rules});
+        return $form;
 
         function getInputNode(field, colCount) {
             if(MU.C_DS_TEXT_AREA == field.displayStyle) {
@@ -306,7 +332,7 @@ MU.ui.DataForm = function() {
 
 
         function getLabel(field) {
-            var $label = $('<label style="display: block;"></label>').attr('for', field.name).text(field.displayName);
+            var $label = $('<label style="display: block;" class="control-label"></label>').attr('for', field.name).text(field.displayName);
             if(field.required && self.formType == MU.C_FT_EDIT) {
                 $label.append('<span class="span_required">*</span>');
             }
@@ -315,81 +341,56 @@ MU.ui.DataForm = function() {
         }
 
         function getFormInput(field, type) {
-            var inputName;
-            /*if(tableFieldMapping && tableFieldMapping[field.name]) {
-                inputName = tableFieldMapping[field.name];
-            } else {
-                inputName = field.colName;
-            }*/
-            inputName = field.colName;
-
-            var styleStr = "";
-            if(field.width) {
-                if('100%' == field.width) {
-                    styleStr += "width:" + field.width + ";";
-                } else {
-                    if('date' == type && self.formType == MU.MU.C_FT_QUERY) {
-                        styleStr += "width:" + (field.width/2 - 10) + "px;";
-                    } else {
-                        styleStr += "width:" + field.width + "px;";
-                    }
-                }
-            }
-            if(field.height) {
-                styleStr += "height:" + field.height + "px;";
-            }
-            var options = '<option value=""> </option>';
-            if(field.dictList) {
-                for(var i = 0; i < field.dictList.length; i++) {
-                    options += '<option value="' + field.dictList[i].value +'">' + field.dictList[i].name+ '</option>'
-                }
-            }
-
-            var attr = '';
-            var styleClass = '';
-            if(field.readonly) {
-                attr += ' readonly="readonly"';
-            }
-            if(field.required) {
-                attr += ' missingMessage="必填" invalidMessage="请输入"';
-                styleClass += ' required';
-            }
+            var inputName = field.colName || field.name;
+            var $input = $('<input>');
 
             if('textarea' == type) {
-                return '<textarea id="' + field.name + '" type="' + type + '" name="' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '"></textarea>';
+                $input = $('<textarea></textarea>');
             } else if('select' == type) {
-                return '<select id="' + field.name + '" type="' + type + '" name="' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '">' + options + '</select>';
-            } else if('date' == type || 'email' == type || 'ip' == type || 'url' == type || 'int' == type || 'double' == type || 'number' == type) {
+                $input = $('<select></select>');
+            } else if('text' == type || 'date' == type || 'email' == type || 'ip' == type || 'url' == type || 'int' == type || 'double' == type || 'number' == type) {
                 if('date' == type) {
-                    styleClass += ' dateField';
+                    $input.addClass('dateField');
                     if(self.formType == MU.C_FT_QUERY) {
-                        return '<input id="' + field.name + '" type="text" name="D_start' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '" queryMode="' + MU.C_QM_GREATER_EQUAL + '"/>&nbsp;至&nbsp;' +
-                            '<input id="' + field.name + '" type="text" name="D_end' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '" queryMode="' + MU.C_QM_LESS_THAN + '"/>';
+                        var $div = $('<div></div>');
+                        $('<input type="text">').attr('id', field.name).attr('name', 'D_start' + inputName).attr('queryMode', MU.C_QM_GREATER_EQUAL).appendTo($div);
+                        $div.append('&nbsp;至&nbsp;');
+                        $('<input type="text">').attr('id', field.name).attr('name', 'D_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).appendTo($div);
+                        return $div;
                     }
-                } else if('email' == type) {
-                    styleClass += ' email';
-                } else if('ip' == type) {
-                    styleClass += ' ip';
-                } else if('url' == type) {
-                    styleClass += ' url';
-                } else if('int' == type) {
-                    styleClass += ' int';
-                } else if('double' == type) {
-                    styleClass += ' double';
-                } else if('number' == type) {
-                    styleClass += ' number';
                 }
 
-                type = 'text';
+                $input.attr('type', type);
             }
-
-            var queryMode = '';
+            $input.addClass('form-control').attr('id', field.name).attr('name', inputName);
+            if(field.readonly) {
+                $input.attr('readonly', 'readonly');
+            }
+            /*if(field.required) {
+                $input.addClass('required');
+            }*/
+            if(field.width) {
+                var width;
+                if('100%' == field.width) {
+                    width = '100%';
+                } else {
+                    if('date' == type && self.formType == MU.MU.C_FT_QUERY) {
+                        width = (field.width/2 - 10) + "px";
+                    } else {
+                        width = field.width + "px";
+                    }
+                }
+                $input.css('width', width);
+            }
+            if(field.height) {
+                $input.css('height', field.height + "px")
+            }
 
             if(self.formType == MU.C_FT_QUERY) {
-                queryMode = getQueryModeLink(field.queryMode);
+                return $('<div></div>').append($input).append(getQueryModeLink(field.queryMode));
             }
 
-            return '<input id="' + field.name + '" type="' + type + '" name="' + inputName + '" style="' + styleStr + '"' + attr + ' class="' + styleClass + '" queryMode="' + field.queryMode + '"/>' + queryMode;
+            return $input;
         }
 
         /**
