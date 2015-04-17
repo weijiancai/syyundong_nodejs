@@ -6,9 +6,11 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var async = require('async');
 var dbo = require('./routes/dbo');
+
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var admin = require('./routes/admin');
+var tools = require('./tools/route');
 
 var app = express();
 
@@ -45,7 +47,7 @@ app.use(function(req, res, next) {
 app.use('/', routes);
 app.use('/users', users);
 app.use('/admin', admin);
-
+app.use('/tools', tools);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

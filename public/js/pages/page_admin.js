@@ -48,4 +48,10 @@ $(function() {
     $('#btnTestSubmit').click(function() {
         form.submit();
     });
+
+    // 新增分类
+    $('#btnAddSportCategory').click(function() {
+        var dialog = new MU.ui.Dialog();
+        dialog.open('新增赛事分类', form.gen());
+    });
 });

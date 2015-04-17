@@ -334,7 +334,7 @@ MU.ui.DataForm = function() {
         function getLabel(field) {
             var $label = $('<label style="display: block;" class="control-label"></label>').attr('for', field.name).text(field.displayName);
             if(field.required && self.formType == MU.C_FT_EDIT) {
-                $label.append('<span class="span_required">*</span>');
+                $label.append('<span class="required">*</span>');
             }
 
             return $label;
@@ -450,5 +450,50 @@ MU.ui.GuidePane = function(hgap, vgap) {
         }
 
         return $table;
+    }
+};
+
+MU.ui.Dialog = function() {
+    var $dialog;
+
+    /**
+     * 打开对话框
+     *
+     * @param title
+     * @param content
+     */
+    this.open = function(title, content, onOk) {
+        $dialog = $('<div class="modal fade">' +
+        '  <div class="modal-dialog">' +
+        '    <div class="modal-content">' +
+        '      <div class="modal-header">' +
+        '        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>' +
+        '        <h4 class="modal-title">' + title + '</h4>' +
+        '      </div>' +
+        '      <div class="modal-body">' + $(content).html() + '</div>' +
+        '      <div class="modal-footer">' +
+        '        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>' +
+        '        <button id="btnOk" type="button" class="btn btn-primary">确定</button>' +
+        '      </div>' +
+        '    </div>' +
+        '  </div>' +
+        '</div>').modal({
+            backdrop: 'static',
+            show: true
+        }).on('hidden.bs.modal', function (e) {
+            // 删除对话框
+            $dialog.remove();
+        });
+
+        // 确定按钮
+        $dialog.find('#btnOk').click(function() {
+            if(onOk) {
+                onOk();
+            }
+        });
+    };
+
+    this.close = function() {
+        $dialog.modal('hide');
     }
 };
