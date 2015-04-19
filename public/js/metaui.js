@@ -50,7 +50,8 @@ MU.ui = {
             //"scrollX": true,
             "columns": [],
             //"ajax": {url: '', type: 'POST', data: {}},
-            "retrieve": true,
+            //"retrieve": true,
+            "destroy": true,
             "initComplete": function(setting) {
                 $container.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
                 $container.find("select, input, a.button, button").uniform();
@@ -86,6 +87,10 @@ MU.ui = {
             option.url = url;
         };
 
+        this.setHeight = function(height) {
+            option.scrollY = height;
+        };
+
         this.setColumns = function(columns) {
             columns.unshift({
                 "render": function ( data, type, row ) {
@@ -100,6 +105,9 @@ MU.ui = {
                 orderSequence: []
             });
             option.columns = columns;
+            if(columns.length > 0) {
+                option.scrollX = true;
+            }
         };
 
         this.initDataTable = function() {

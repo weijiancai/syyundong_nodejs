@@ -5,6 +5,12 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var async = require('async');
+var config = require('./lib/config');
+
+// 初始化config
+config.init();
+config.addSystemDataSource('mysql', 'localhost', '3306', 'root', 'root', 'syyundong');
+
 var dbo = require('./routes/dbo');
 
 var routes = require('./routes/index');
