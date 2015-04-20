@@ -11,3 +11,4 @@ npm install async
 npm install mysql
 npm install debug
 npm install ejs
+npm install tedious
