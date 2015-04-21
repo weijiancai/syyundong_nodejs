@@ -12,3 +12,4 @@ npm install mysql
 npm install debug
 npm install ejs
 npm install tedious
+npm install sqlite3

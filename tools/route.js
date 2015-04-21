@@ -1,8 +1,11 @@
 var dbo = require('./../routes/dbo');
 var db = require('../lib/db');
+var config = require('../lib/config');
 var async = require('async');
 var express = require('express');
 var router = express.Router();
+
+db.setDataSource(config.getDataSource('sh'));
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {

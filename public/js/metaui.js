@@ -65,6 +65,7 @@ MU.ui = {
                         } else {
                             $(this).attr("checked", false);
                         }
+                        }
                         $.uniform.update($(this));
                     });
                 });

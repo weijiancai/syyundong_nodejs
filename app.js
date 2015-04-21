@@ -10,6 +10,7 @@ var config = require('./lib/config');
 // 初始化config
 config.init();
 config.addSystemDataSource('mysql', 'localhost', '3306', 'root', 'root', 'syyundong');
+config.addDataSource('sh', 'sqlServer', '119.254.9.102', '2005', 'SHLM', 'SHLM&yhdt', 'yhbis_mobile');
 
 var dbo = require('./routes/dbo');
 

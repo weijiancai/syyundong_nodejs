@@ -1,1 +1,1 @@
-{"dataSource":{"__system__":{"dbType":"mysql","host":"localhost","port":"3306","user":"root","password":"root","database":"syyundong"}}}
+{"dataSource":{"__system__":{"dbType":"sqlite","host":"localhost","port":"3306","user":"root","password":"root","database":"syyundong"},"sh":{"dbType":"sqlServer","host":"119.254.9.102","port":"2005","user":"SHLM","password":"SHLM&yhdt","database":"yhbis_mobile"}}}
