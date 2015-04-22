@@ -11,5 +11,11 @@ npm install async
 npm install mysql
 npm install debug
 npm install ejs
+# 连接sqlServer
 npm install tedious
 npm install sqlite3
+# jQuery解析
+npm install cheerio
+npm install jsdom
+# 网页请求
+npm install request

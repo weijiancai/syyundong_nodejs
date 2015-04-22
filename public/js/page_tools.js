@@ -119,4 +119,11 @@ $(function() {
             }
         }
     });
+
+    // 获得网页
+    $('#btnGetPage').click(function() {
+        $.get('/tools/getWebPage', {url: $('#url').val()}, function(data) {
+            $('#webPageContent').val(data);
+        });
+    });
 });
