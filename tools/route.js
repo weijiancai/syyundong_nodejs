@@ -5,6 +5,7 @@ var async = require('async');
 var express = require('express');
 var request = require('request');
 var cheerio = require('cheerio');
+var fs = require('fs');
 var router = express.Router();
 
 //db.setDataSource(config.getDataSource('sh'));
@@ -25,34 +26,32 @@ router.post('/dbBrowser', function(req, res, next) {
 router.get('/getWebPage', function(req, res, next) {
     var url = req.query.url;
     var selector = req.query.selector;
-    /*request(url, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            //console.log(body);
-            var $ = cheerio.load(body, {
+    var cookie = req.query.cookie;
+    var localFilePath = req.query.localFilePath;
 
-            });
-            console.log($(selector));
-            console.log('-------------------------------------------');
-            console.log($(selector).html());
-            console.log($.html(selector));
-            res.send($.html(selector));
+    request({
+        url: url,
+        headers: {
+            Cookie: cookie,
+            "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3"
         }
-    })*/
-
-    var j = request.jar();
-    var cookie = request.cookie('Hm_lvt_244cac09e43da18d8a6a190c615e0daa=1429193496,1429453854,1429713115,1429803518; Hm_lpvt_244cac09e43da18d8a6a190c615e0daa=1429807004; passport=fmyupssl7ceu2hlidzpmbmnbqqy1ae9w');
-    j.setCookie(cookie, url);
-    request({url: url, jar: j}, function (error, response, body) {
+    }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            //console.log(body);
             var $ = cheerio.load(body, {
-
+                ignoreWhitespace: false,
+                normalizeWhitespace: false,
+                xmlMode: false,
+                decodeEntities: false
             });
-            console.log($(selector));
-            console.log('-------------------------------------------');
-            console.log($(selector).html());
-            console.log($.html(selector));
-            res.send($.html(selector));
+            var html = $.html(selector);
+            // 保存到本地文件
+            if(localFilePath) {
+                fs.writeFile(localFilePath, html);
+            }
+            res.send(html);
+        } else {
+            console.log('error = ' + error);
+            console.log('statusCode = ' + response.statusCode);
         }
     })
 });

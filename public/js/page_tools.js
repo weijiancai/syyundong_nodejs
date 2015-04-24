@@ -122,7 +122,12 @@ $(function() {
 
     // 获得网页
     $('#btnGetPage').click(function() {
-        $.get('/tools/getWebPage', {url: $('#url').val(), selector: $('#jquerySelector').val()}, function(data) {
+        $.get('/tools/getWebPage', {
+            url: $('#url').val(),
+            selector: $('#jquerySelector').val(),
+            cookie: $('#cookie').val(),
+            localFilePath: $('#localFilePath').val()
+        }, function(data) {
             $('#webPageContent').val(data);
         });
     });
