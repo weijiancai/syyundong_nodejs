@@ -19,3 +19,10 @@ npm install cheerio
 npm install jsdom
 # 网页请求
 npm install request
+#ftp
+npm install ftp
+npm install ftps
+# 字符集转换
+npm install iconv-lite
+# 文件上传
+npm install multer

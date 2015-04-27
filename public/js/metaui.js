@@ -15,7 +15,7 @@ MU.ui = {
             // 显示
             var $target = $('#' + $this.data('target')).show();
             if(onSelectCallback) {
-                onSelectCallback($this, $current);
+                onSelectCallback($this, $current, $target);
             } else {
                 $target.addClass('active');
             }
@@ -38,7 +38,7 @@ MU.ui = {
      * @constructor
      */
     DataTable: function($container) {
-        var dt, self = this;
+        var dt, self = this, initComplete, loadDataEnd;
         var option = {
             "searching": false,
             "lengthChange": false,
@@ -68,6 +68,10 @@ MU.ui = {
                         $.uniform.update($(this));
                     });
                 });
+                // 回调初始化完成
+                if(initComplete) {
+                    initComplete();
+                }
             }
         };
 
@@ -111,15 +115,20 @@ MU.ui = {
         };
 
         this.initDataTable = function() {
-            if (!dt) {
+            dt = $container.DataTable(option);
+            /*if (!dt) {
                 dt = $container.DataTable(option);
-            }
+            }*/
         };
 
         this.loadData = function(data) {
             this.initDataTable();
             dt.clear();
             dt.rows.add(data.data ? data.data : data).draw();
+            // 加载数据完成后回调
+            if(loadDataEnd) {
+                loadDataEnd(data);
+            }
         };
 
         this.query = function(params) {
@@ -132,6 +141,14 @@ MU.ui = {
         this.getOption = function() {
             return option;
         };
+
+        this.onInitComplete = function(callback) {
+            initComplete = callback;
+        };
+
+        this.onLoadDataEnd = function(callback) {
+            loadDataEnd = callback;
+        }
     }
 };
 /* 常量 */

@@ -5,6 +5,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var async = require('async');
+var multer  = require('multer');
 var config = require('./lib/config');
 
 // 初始化config
@@ -32,8 +33,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '')));
+app.use(express.static(__dirname + '/uploads'));
+app.use(multer({ dest: './uploads/'}));
 
 app.use(function(req, res, next) {
+    // 项目目录
+    req.projectDir =  path.join(__dirname, '');
+    // 运动项目
     var groupName = require('url').parse(req.url).pathname;
     res.data = {groupName: groupName};
     async.parallel({

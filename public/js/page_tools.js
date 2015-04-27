@@ -1,11 +1,22 @@
+var Tools = {
+    ftp: {}
+};
+
 $(function() {
     var switchTab = new MU.ui.SwitchTab($('ul.page-sidebar-menu'));
-    switchTab.onSelect(function($now, $old){
+    switchTab.onSelect(function($now, $old, $target){
         $now.append('<span class="selected"></span>');
         $old.parent().removeClass('active').find('a span.selected').remove();
         $now.parent().addClass('active');
         // 设置标题
         $('#pageTile').text($now.text());
+
+        var targetId = $target.attr('id');
+        if(targetId == 'desktop_ftp') {
+            Tools.ftp.init();
+        } else if(targetId == 'desktop_db') {
+            (new Tools.DB()).init();
+        }
     });
 
     var $stringContent = $('#stringContent');
@@ -87,38 +98,7 @@ $(function() {
         return result;
     }
 
-    // 数据库浏览
-    $.fn.zTree.init($("#dbBrowser"), {
-        async: {
-            enable: true,
-            url: '/tools/dbBrowser',
-            type: 'post',
-            autoParam:["id", "type"]
-        },
-        callback: {
-            onClick: function(event, treeId, treeNode) {
-                if(treeNode.type == 'table') {
-                    console.log(treeNode);
-                    var children = treeNode.children;
-                    for(var i = 0; i < children.length; i++) {
-                        if(children[i].type == 'column') {
-                            children = children[i].children;
-                            break;
-                        }
-                    }
-                    var columns = [];
-                    for(i = 0; i < children.length; i++) {
-                        var column = children[i];
-                        columns.push({data: column.name, title: column.name});
-                    }
-                    var dt = new MU.ui.DataTable($('#dbTable'));
-                    dt.setColumns(columns);
-                    dt.setHeight(600);
-                    dt.initDataTable();
-                }
-            }
-        }
-    });
+
 
     // 获得网页
     $('#btnGetPage').click(function() {

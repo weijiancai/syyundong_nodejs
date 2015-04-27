@@ -29,7 +29,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<meta content="" name="description" />
 	<meta content="" name="author" />
 	<!-- BEGIN GLOBAL MANDATORY STYLES -->
-	<link href="/views/admin/media/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+	<link href="/public/css/bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css"/>
 	<link href="/views/admin/media/css/bootstrap-responsive.min.css" rel="stylesheet" type="text/css"/>
 	<link href="/views/admin/media/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
 	<link href="/views/admin/media/css/style-metro.css" rel="stylesheet" type="text/css"/>
@@ -43,12 +43,11 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<link href="/views/admin/media/css/jquery.gritter.css" rel="stylesheet" type="text/css"/>
 	<link href="/views/admin/media/css/daterangepicker.css" rel="stylesheet" type="text/css" />
 	<link href="/views/admin/media/css/fullcalendar.css" rel="stylesheet" type="text/css"/>
-	<link href="/views/admin/media/css/jqvmap.css" rel="stylesheet" type="text/css" media="screen"/>
-	<link href="/views/admin/media/css/jquery.easy-pie-chart.css" rel="stylesheet" type="text/css" media="screen"/>
 	<!-- END PAGE LEVEL STYLES -->
 
     <link href="/public/js/lib/datatable/css/jquery.dataTables.css" rel="stylesheet" type="text/css" media="screen"/>
     <link href="/public/js/lib/ztree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/dmuploader/uploader.css" rel="stylesheet" type="text/css" media="screen"/>
     <link href="/tools/css/page_tools.css" rel="stylesheet" type="text/css" media="screen"/>
 
 	<link rel="shortcut icon" href="/views/admin/media/image/favicon.ico" />
@@ -63,7 +62,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<!-- BEGIN CONTAINER -->
 	<div class="page-container">
 		<!-- BEGIN SIDEBAR -->
-		<div class="page-sidebar nav-collapse collapse">
+		<div class="page-sidebar nav-collapse">
 
 			<!-- BEGIN SIDEBAR MENU -->        
 			<ul class="page-sidebar-menu" data-current="menu_desktop">
@@ -79,7 +78,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 					</a>
 				</li>
 				<li id="menu_game" class="">
-					<a href="javascript:;">
+					<a href="javascript:;" data-target="desktop_db">
 						<i class="icon-bookmark-empty"></i><span class="title">数据库</span>
 					</a>
 				</li>
@@ -89,8 +88,8 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 					</a>
 				</li>
 				<li id="menu_venue" class="">
-					<a href="javascript:;">
-						<i class="icon-briefcase"></i><span class="title">场馆</span>
+					<a href="javascript:;" data-target="desktop_ftp">
+						<i class="icon-briefcase"></i><span class="title">FTP</span>
 					</a>
 				</li>
 				<li id="menu_user" class="last">
@@ -105,19 +104,6 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 
 		<!-- BEGIN PAGE -->
 		<div class="page-content">
-			<!-- BEGIN SAMPLE PORTLET CONFIGURATION MODAL FORM-->
-			<div id="portlet-config" class="modal hide">
-				<div class="modal-header">
-					<button data-dismiss="modal" class="close" type="button"></button>
-					<h3>Widget Settings</h3>
-				</div>
-
-				<div class="modal-body">
-					Widget settings form goes here
-				</div>
-			</div>
-			<!-- END SAMPLE PORTLET CONFIGURATION MODAL FORM-->
-
 			<!-- BEGIN PAGE CONTAINER-->
 			<div class="container-fluid">
 				<!-- BEGIN PAGE HEADER-->
@@ -134,72 +120,22 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 
 				<!-- 字符串处理 -->
                 <div id="desktop_string">
-					<label for="stringContent"></label><textarea id="stringContent" rows="15" class="form-control" style="width: 100%;"></textarea>
-					<div>
-						<label for="replaceSourceText">替换:</label><input id="replaceSourceText" type="text"><label for="replaceTargetText">为</label><input id="replaceTargetText" type="text">
-					</div>
-					<button id="btnStringOk" class="btn btn-primary">字符串连接</button>
-					<button id="btnReplace" class="btn btn-primary">替换</button>
-					<button id="btnToUpperCase" class="btn btn-primary">大写</button>
-					<button id="btnToLowerCase" class="btn btn-primary">小写</button>
-					<button id="btnToHumpStr" class="btn btn-primary">驼峰字符串</button>
+					<% include string.ejs %>
 				</div>
 
 				<!-- 数据库 -->
 				<div id="desktop_db" style="display: none;">
-					<div class="span3">
-						<ul id="dbBrowser" class="ztree"></ul>
-					</div>
-					<div class="span9">
-						<table id="dbTable"></table>
-					</div>
+					<% include db.ejs %>
 				</div>
 
 				<!-- 网页解析 -->
 				<div id="desktop_webPageParser" style="display: none;">
-					<form class="form-horizontal">
-						<div class="form-group">
-							<label for="url" class="control-label">网址</label>
-							<div>
-								<input type="url" class="form-control" id="url">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="cookie" class="control-label">Cookie</label>
-							<div>
-								<input type="url" class="form-control" id="cookie">
-							</div>
-						</div>
-						<div>
-							<label for="localFilePath">本地文件路径：</label>
-							<input id="localFilePath" type="text" class="form-control">
-						</div>
-						<div class="form-group">
-							<label for="url" class="control-label">jquery选择器</label>
-							<div>
-								<input type="text" class="form-control" id="jquerySelector">
-								<button id="btnGetPage" type="button" class="btn btn-primary">获取</button>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="webPageContent" class="col-sm-2 control-label">网页内容</label>
-							<textarea rows="10" class="form-control" id="webPageContent" style="width: 100%;"></textarea>
-						</div>
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input type="checkbox"> Remember me
-									</label>
-								</div>
-							</div>
-						</div>
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<button type="submit" class="btn btn-default">Sign in</button>
-							</div>
-						</div>
-					</form>
+					<% include webPageParser.ejs %>
+				</div>
+
+				<!-- ftp -->
+				<div id="desktop_ftp" style="display: none;">
+					<% include ftp.ejs %>
 				</div>
 			</div>
 			<!-- END PAGE CONTAINER-->
@@ -227,7 +163,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<!-- IMPORTANT! Load jquery-ui-1.10.1.custom.min.js before bootstrap.min.js to fix bootstrap tooltip conflict with jquery ui tooltip -->
 
 	<script src="/views/admin/media/js/jquery-ui-1.10.1.custom.min.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/bootstrap.min.js" type="text/javascript"></script>
+	<script src="/public/css/bootstrap/js/bootstrap.js" type="text/javascript"></script>
 
 	<!--[if lt IE 9]>
 
@@ -243,16 +179,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<!-- END CORE PLUGINS -->
 
 	<!-- BEGIN PAGE LEVEL PLUGINS -->
-	<script src="/views/admin/media/js/jquery.vmap.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.vmap.russia.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.vmap.world.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.vmap.europe.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.vmap.germany.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.vmap.usa.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.vmap.sampledata.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.flot.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.flot.resize.js" type="text/javascript"></script>
-	<script src="/views/admin/media/js/jquery.pulsate.min.js" type="text/javascript"></script>
+
 	<script src="/views/admin/media/js/date.js" type="text/javascript"></script>
 	<script src="/views/admin/media/js/daterangepicker.js" type="text/javascript"></script>
 	<script src="/views/admin/media/js/jquery.gritter.js" type="text/javascript"></script>
@@ -267,8 +194,12 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<script type="text/javascript" src="/public/js/lib/jquery.validate.js"></script>
 	<script src="/public/js/lib/datatable/js/jquery.dataTables.js" type="text/javascript"></script>
 	<script src="/public/js/lib/ztree/js/jquery.ztree.all-3.5.js" type="text/javascript"></script>
+	<script src="/public/js/lib/dmuploader/dmuploader.js" type="text/javascript"></script>
+	<script src="/public/js/lib/dmuploader/uploader_demo.js" type="text/javascript"></script>
 	<script src="/public/js/metaui.js" type="text/javascript"></script>
 	<script src="/public/js/page_tools.js" type="text/javascript"></script>
+	<script src="/tools/js/ftp.js" type="text/javascript"></script>
+	<script src="/tools/js/db.js" type="text/javascript"></script>
 	<!-- END PAGE LEVEL SCRIPTS -->
 
 	<script>
@@ -276,11 +207,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 		jQuery(document).ready(function() {    
 		   App.init(); // initlayout and core plugins
 		   Index.init();
-		   Index.initJQVMAP(); // init index page's custom scripts
 		   Index.initCalendar(); // init index page's custom scripts
-		   Index.initCharts(); // init index page's custom scripts
-		   Index.initChat();
-		   Index.initMiniCharts();
 		   Index.initDashboardDaterange();
 		   Index.initIntro();
 		});
