@@ -8,7 +8,6 @@ var cheerio = require('cheerio');
 var fs = require('fs');
 var Ftp = require('ftp');
 var iconv = require('iconv-lite');
-var FTPS = require('ftps');
 var router = express.Router();
 
 //db.setDataSource(config.getDataSource('sh'));
@@ -141,15 +140,13 @@ router.get('/ftpDownload', function(req, res, next) {
     var path = req.query.path;
 
     if(path) {
-        iconv.extendNodeEncodings();
-
         res.writeHead(200, {
             'Content-Type': 'application/force-download',
-            'Content-Disposition': 'attachment; filename=' + path.substr(path.lastIndexOf('/'))
+            'Content-Disposition': 'attachment; filename=' + path.substr(path.lastIndexOf('/') + 1)
         });
 
-        path = iconv.encode(path, 'GBK').toString();
-        fs.write('./test.txt', iconv.encode(path, 'GBK'));
+        //path = iconv.encode(path, 'GBK').toString();
+        //fs.write('./test.txt', iconv.encode(path, 'GBK'));
 
         var ftp = new Ftp();
         ftp.on('ready', function() {
@@ -160,12 +157,8 @@ router.get('/ftpDownload', function(req, res, next) {
                     return;
                 }
 
-                stream.once('close', function() { c.end(); });
+                stream.once('close', function() { ftp.end(); });
                 stream.pipe(res);
-
-                ftp.end();
-                ftp.destroy();
-
             });
         }).on('end', function() {
             res.send();
