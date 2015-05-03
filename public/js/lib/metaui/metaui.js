@@ -39,6 +39,9 @@ MU.ui = {
      */
     DataTable: function($container) {
         var dt, self = this, initComplete, loadDataEnd;
+        var isInit; // 是否已初始化
+        var selectedRow;
+
         var option = {
             "searching": false,
             "lengthChange": false,
@@ -53,24 +56,44 @@ MU.ui = {
             //"retrieve": true,
             "destroy": true,
             "initComplete": function(setting) {
-                $container.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
-                $container.find("select, input, a.button, button").uniform();
+                if(!isInit) {
+                    $container.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
+                    $container.find("select, input, a.button, button").uniform();
 
-                $container.find('.group-checkable').change(function () {
-                    var checked = $(this).is(":checked");
-                    $container.find('.checkboxes').each(function () {
-                        console.log(this);
-                        if (checked) {
-                            $(this).attr("checked", true);
-                        } else {
-                            $(this).attr("checked", false);
-                        }
-                        $.uniform.update($(this));
+                    $container.find('.group-checkable').change(function () {
+                        var checked = $(this).is(":checked");
+                        $container.find('.checkboxes').each(function (index) {
+                            console.log(this);
+                            if (checked) {
+                                $(this).attr("checked", true);
+                            } else {
+                                $(this).attr("checked", false);
+                            }
+                            $.uniform.update($(this));
+                        });
                     });
-                });
-                // 回调初始化完成
-                if(initComplete) {
-                    initComplete();
+
+                    // 选中行
+                    $container.find('tbody').on( 'click', 'tr', function () {
+                        // 获得行号
+                        var row = dt.row(this).index();
+                        if ($(this).hasClass('selected')) {
+                            $(this).removeClass('selected');
+                            self.setValue(row, 0, false);
+                            selectedRow = null;
+                        } else {
+                            dt.$('tr.selected').removeClass('selected');
+                            $(this).addClass('selected');
+                            self.setValue(row, 0, true);
+                            selectedRow = dt.row(this).data();
+                        }
+                    } );
+
+                    // 回调初始化完成
+                    if(initComplete) {
+                        initComplete();
+                    }
+                    isInit = true;
                 }
             }
         };
@@ -98,7 +121,8 @@ MU.ui = {
         this.setColumns = function(columns) {
             columns.unshift({
                 "render": function ( data, type, row ) {
-                    return '<input type="checkbox" class="checkboxes"/>';
+                    var check = data ? 'checked="checked"' : '';
+                    return '<input type="checkbox" class="checkboxes" ' + check + '/>';
                 },
                 "targets": 0,
                 title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
@@ -140,6 +164,26 @@ MU.ui = {
 
         this.getOption = function() {
             return option;
+        };
+
+        /**
+         * 设置单元格的值
+         *
+         * @param row 行
+         * @param col 列
+         * @param value 值
+         */
+        this.setValue = function(row, col, value) {
+            dt.cell(row, col).data(value).draw();
+        };
+
+        /**
+         * 获得选中行数据
+         *
+         * @returns {Object}
+         */
+        this.getSelectedRow = function() {
+            return selectedRow;
         };
 
         this.onInitComplete = function(callback) {
@@ -215,6 +259,39 @@ MU.ui.DataForm = function() {
         }
 
         return this.gen();
+    };
+
+    // 添加字段
+    this.addField = function(field) {
+        this.fieldList.push(field);
+    };
+
+    // 设置字段值
+    this.setValue = function(name, value) {
+        $form.find('[name="' + name + '"]').val(value);
+    };
+
+    // ajax post提交表单
+    this.post = function(url, params, callback) {
+        $.post(url, $.extend(this.serialize(), params), callback);
+    };
+
+    this.serialize = function () {
+        var serializeObj = {};
+        var array = $form.serializeArray();
+        $(array).each(function (index, element) {
+            var name = element.name;
+            if (serializeObj[name]) {
+                if ($.isArray(serializeObj[name])) {
+                    serializeObj[name].push(this.value);
+                } else {
+                    serializeObj[name] = [serializeObj[name], this.value];
+                }
+            } else {
+                serializeObj[name] = this.value;
+            }
+        });
+        return serializeObj;
     };
 
     this.gen = function() {

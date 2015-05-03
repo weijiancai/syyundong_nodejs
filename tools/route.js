@@ -6,6 +6,7 @@ var express = require('express');
 var request = require('request');
 var cheerio = require('cheerio');
 var fs = require('fs');
+var path = require('path');
 var Ftp = require('ftp');
 var iconv = require('iconv-lite');
 var router = express.Router();
@@ -215,6 +216,91 @@ router.post('/ftpUpload', function(req, res, next) {
     } else {
         res.send({success: true});
     }
+});
+
+var tplConfig = [];
+
+// 模板浏览
+router.post('/tplBrowser', function(req, res) {
+    var projectDir = req.projectDir;
+    var tplDir = projectDir + path.sep + 'tpls';
+    var tplFile =  path.join(tplDir, 'tpls.json');
+
+    if(!fs.existsSync(tplFile)) {
+        fs.writeFile(tplFile, JSON.stringify(tplConfig));
+    } else {
+        var str = fs.readFileSync(tplFile, {encoding: 'UTF-8'});
+        if(str.length > 0) {
+            tplConfig = JSON.parse(str);
+        }
+    }
+
+    res.send(tplConfig);
+    /*var files = fs.readdirSync(tplDir);
+    for(file in files) {
+        var fileName =
+    }*/
+});
+
+// 保存模板
+router.post('/tplSave', function(req, res) {
+    var html = req.body.html || '';
+    var css = req.body.css || '';
+    var javascript = req.body.javascript || '';
+    var data = req.body.data || '';
+    var name = req.body.name;
+    var desc = req.body.desc;
+
+    var hasConfig = false;
+    for(var i = 0; i < tplConfig.length; i++) {
+        var config = tplConfig[i];
+        if (config.name == name) {
+            hasConfig = true;
+        }
+    }
+    if(!hasConfig) {
+        tplConfig.push({name: name, desc: desc});
+    }
+
+    var projectDir = req.projectDir;
+    var tplDir = projectDir + path.sep + 'tpls';
+    // 写入文件
+    var tplFile =  path.join(tplDir, 'tpls.json');
+    fs.writeFile(tplFile, JSON.stringify(tplConfig));
+
+    var dir = path.join(tplDir, name);
+    if(!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+    }
+
+    fs.writeFile(path.join(dir, name + '.html'), html);
+    fs.writeFile(path.join(dir, name + '.css'), css);
+    fs.writeFile(path.join(dir, name + '.js'), javascript);
+    fs.writeFile(path.join(dir, name + '.json'), data);
+
+    res.send('success');
+});
+
+// 获得模板
+router.post('/tplGet', function(req, res) {
+    var name = req.body.name;
+    var projectDir = req.projectDir;
+
+    for(var i = 0; i < tplConfig.length; i++) {
+        var config = tplConfig[i];
+        if(config.name == name) {
+            var obj = {};
+            obj.html = fs.readFileSync(path.join(projectDir, 'tpls' + path.sep + name + path.sep + name + '.html'), {encoding: 'UTF-8'});
+            obj.css = fs.readFileSync(path.join(projectDir, 'tpls' + path.sep + name + path.sep + name + '.css'), {encoding: 'UTF-8'});
+            obj.javascript = fs.readFileSync(path.join(projectDir, 'tpls' + path.sep + name + path.sep + name + '.js'), {encoding: 'UTF-8'});
+            obj.data = fs.readFileSync(path.join(projectDir, 'tpls' + path.sep + name + path.sep + name + '.json'), {encoding: 'UTF-8'});
+            obj.name = config.name;
+            obj.desc = config.desc;
+            res.send(obj);
+            return;
+        }
+    }
+    res.send();
 });
 
 

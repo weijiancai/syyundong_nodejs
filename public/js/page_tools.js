@@ -16,6 +16,8 @@ $(function() {
             Tools.ftp.init();
         } else if(targetId == 'desktop_db') {
             (new Tools.DB()).init();
+        } else if(targetId == 'desktop_tpl') {
+            Tools.tpl.init();
         }
     });
 

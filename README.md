@@ -26,3 +26,5 @@ npm install ftps
 npm install iconv-lite
 # 文件上传
 npm install multer
+# 日志
+npm install log4js

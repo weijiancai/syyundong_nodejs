@@ -1,0 +1,6 @@
+.gridPane {
+    width: 100%;
+}
+.gridPane td {
+    padding: 5px 0;
+}

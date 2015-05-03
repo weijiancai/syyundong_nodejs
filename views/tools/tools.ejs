@@ -48,6 +48,9 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
     <link href="/public/js/lib/datatable/css/jquery.dataTables.css" rel="stylesheet" type="text/css" media="screen"/>
     <link href="/public/js/lib/ztree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" type="text/css" media="screen"/>
     <link href="/public/js/lib/dmuploader/uploader.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/artDialog/ui-dialog.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/metaui/metaui.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/codemirror/codemirror.css" rel="stylesheet" type="text/css" media="screen"/>
     <link href="/tools/css/page_tools.css" rel="stylesheet" type="text/css" media="screen"/>
 
 	<link rel="shortcut icon" href="/views/admin/media/image/favicon.ico" />
@@ -93,8 +96,8 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 					</a>
 				</li>
 				<li id="menu_user" class="last">
-					<a href="javascript:;">
-						<i class="icon-gift"></i><span class="title">用户</span>
+					<a href="javascript:;" data-target="desktop_tpl">
+						<i class="icon-gift"></i><span class="title">模板</span>
 					</a>
 				</li>
 			</ul>
@@ -137,6 +140,11 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 				<div id="desktop_ftp" style="display: none;">
 					<% include ftp.ejs %>
 				</div>
+
+				<!-- 模板 -->
+                <div id="desktop_tpl" style="display: none;">
+                    <% include tpl.ejs %>
+                </div>
 			</div>
 			<!-- END PAGE CONTAINER-->
 		</div>
@@ -196,10 +204,19 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<script src="/public/js/lib/ztree/js/jquery.ztree.all-3.5.js" type="text/javascript"></script>
 	<script src="/public/js/lib/dmuploader/dmuploader.js" type="text/javascript"></script>
 	<script src="/public/js/lib/dmuploader/uploader_demo.js" type="text/javascript"></script>
-	<script src="/public/js/metaui.js" type="text/javascript"></script>
+	<script src="/public/js/lib/artDialog/dialog.js" type="text/javascript"></script>
+	<script src="/public/js/lib/metaui/metaui.js" type="text/javascript"></script>
+	<script src="/public/js/lib/codemirror/codemirror.js" type="text/javascript"></script>
+	<script src="/public/js/lib/codemirror/mode/xml/xml.js" type="text/javascript"></script>
+	<script src="/public/js/lib/codemirror/mode/javascript/javascript.js" type="text/javascript"></script>
+	<script src="/public/js/lib/codemirror/mode/css/css.js" type="text/javascript"></script>
+	<script src="/public/js/lib/codemirror/mode/htmlmixed/htmlmixed.js" type="text/javascript"></script>
+	<script src="/public/js/lib/template.js" type="text/javascript"></script>
 	<script src="/public/js/page_tools.js" type="text/javascript"></script>
 	<script src="/tools/js/ftp.js" type="text/javascript"></script>
 	<script src="/tools/js/db.js" type="text/javascript"></script>
+	<script src="/tools/js/tpl.js" type="text/javascript"></script>
+
 	<!-- END PAGE LEVEL SCRIPTS -->
 
 	<script>
