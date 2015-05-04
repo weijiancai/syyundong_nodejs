@@ -11,19 +11,23 @@ Tools.tpl = {
 
         var cmHtml = CodeMirror.fromTextArea($('#tplHtmlContent').get(0), {
             mode: 'text/html',
-            lineNumbers: true
+            lineNumbers: true,
+            indentUnit: 4
         });
         var cmCss = CodeMirror.fromTextArea($('#tplCssContent').get(0), {
             mode: 'text/css',
-            lineNumbers: true
+            lineNumbers: true,
+            indentUnit: 4
         });
         var cmJavaScript = CodeMirror.fromTextArea($('#tplJavascriptContent').get(0), {
             mode: 'text/css',
-            lineNumbers: true
+            lineNumbers: true,
+            indentUnit: 4
         });
         var cmJson = CodeMirror.fromTextArea($('#tplDataContent').get(0), {
             mode: {name: "javascript", json: true},
-            lineNumbers: true
+            lineNumbers: true,
+            indentUnit: 4
         });
 
         var form = new MU.ui.DataForm();
@@ -36,6 +40,12 @@ Tools.tpl = {
         $('#btnAddTpl').click(function() {
             $('#tplTables').hide();
             $('#tplEdit').show();
+            // 清空数据
+            cmHtml.setValue('');
+            cmCss.setValue('');
+            cmJavaScript.setValue('');
+            cmJson.setValue('');
+            $('#tplPreview').attr('srcdoc', '');
         });
         // 编辑模板
         $('#btnEditTpl').click(function() {
@@ -82,7 +92,16 @@ Tools.tpl = {
         // 模板生成
         $('#btnTplGen').on('click', function() {
             var render = template.compile(cmHtml.getDoc().getValue());
+
             var deps = '';
+            if($('#depJquery2_1_3').get(0).checked) {
+                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/jquery-2.1.3/jquery-2.1.3.js"></script>';
+            }
+
+            if($('#depBootstrap3_3_4').get(0).checked) {
+                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/bootstrap-3.3.4/dist/css/bootstrap.css"/>';
+                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/bootstrap-3.3.4/dist/js/bootstrap.js"></script>';
+            }
 
             if($('#depJqmobi2_2').get(0).checked) {
                 deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/main.css"/>';
