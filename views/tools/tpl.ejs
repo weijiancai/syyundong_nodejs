@@ -19,7 +19,19 @@
     </div>
     <!-- 预览 -->
     <div>
-        <iframe id="tplPreview" style="height: 400px;width: 100%;"></iframe>
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#tab_tplPreview" aria-expanded="true">预览</a></li>
+            <li class=""><a data-toggle="tab" href="#tab_tplSourceCode" aria-expanded="false">源代码</a></li>
+        </ul>
+        <div class="tab-content">
+            <div id="tab_tplPreview" class="tab-pane active">
+                <iframe id="tplPreview" style="height: 400px;width: 100%;padding: 10px;"></iframe>
+            </div>
+
+            <div id="tab_tplSourceCode" class="tab-pane">
+                <textarea id="tplSourceCode" class="form-control" style="height: 400px;"></textarea>
+            </div>
+        </div>
     </div>
 
     <ul class="nav nav-tabs">

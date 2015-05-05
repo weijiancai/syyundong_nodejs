@@ -1,0 +1,4 @@
+[
+    {name: 'tplPreview', title: '预览'},
+    {name: 'tplSourceCode', title: '源代码'},
+]

@@ -39,6 +39,12 @@ Tools.DB = function() {
                 }
             }
         });
+
+        var cmSql = CodeMirror.fromTextArea($('#dbSqlConsole').get(0), {
+            mode: 'text/x-sql',
+            lineNumbers: true,
+            indentUnit: 4
+        });
     };
 
     this.initTable = function(id, children) {

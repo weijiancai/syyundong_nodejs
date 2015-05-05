@@ -33,6 +33,17 @@ router.post('/dbRetrieve', function(req, res, next) {
     });
 });
 
+router.post('/dbGetDataSource', function(req, res, next) {
+    var dataSource = config.getDataSource();
+    var array = [];
+    for(var key in dataSource) {
+        if(dataSource.hasOwnProperty(key)) {
+            array.push(key);
+        }
+    }
+    res.send(array);
+});
+
 router.get('/getWebPage', function(req, res, next) {
     var url = req.query.url;
     var selector = req.query.selector;

@@ -1,0 +1,13 @@
+<div>
+    <ul class="nav nav-tabs">
+        {{each list}}
+        <li class="{{if $index == 0}}active{{/if}}"><a href="#tab_{{$value.name}}" data-toggle="tab">{{$value.title}}</a></li>
+        {{/each}}
+    </ul>
+
+    <div class="tab-content">
+        {{each list}}
+        <div class="tab-pane {{if $index == 0}}active{{/if}}" id="tab_{{$value.name}}">{{$value.title}}</div>
+        {{/each}}
+    </div>
+</div>

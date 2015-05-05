@@ -29,6 +29,11 @@ Tools.tpl = {
             lineNumbers: true,
             indentUnit: 4
         });
+        var cmSourceCode = CodeMirror.fromTextArea($('#tplSourceCode').get(0), {
+            mode: 'text/html',
+            lineNumbers: true,
+            indentUnit: 4
+        });
 
         var form = new MU.ui.DataForm();
         form.colCount = 1;
@@ -93,57 +98,57 @@ Tools.tpl = {
         $('#btnTplGen').on('click', function() {
             var render = template.compile(cmHtml.getDoc().getValue());
 
-            var deps = '';
+            var deps = '', indent = '        ';
             if($('#depJquery2_1_3').get(0).checked) {
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/jquery-2.1.3/jquery-2.1.3.js"></script>';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/jquery-2.1.3/jquery-2.1.3.js"></script>\r\n';
             }
 
             if($('#depBootstrap3_3_4').get(0).checked) {
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/bootstrap-3.3.4/dist/css/bootstrap.css"/>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/bootstrap-3.3.4/dist/js/bootstrap.js"></script>';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/bootstrap-3.3.4/dist/css/bootstrap.css"/>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/bootstrap-3.3.4/dist/js/bootstrap.js"></script>\r\n';
             }
 
             if($('#depJqmobi2_2').get(0).checked) {
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/main.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/appframework.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/lists.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/forms.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/buttons.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/badges.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/grid.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/android.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/win8.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/bb.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/ios.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/ios7.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/tizen.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/firefox.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.actionsheet.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.popup.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.scroller.css"/>';
-                deps += '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.selectBox.css"/>';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/main.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/appframework.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/lists.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/forms.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/buttons.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/badges.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/grid.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/android.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/win8.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/bb.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/ios.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/ios7.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/tizen.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/firefox.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.actionsheet.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.popup.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.scroller.css"/>\r\n';
+                deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/plugins/css/af.selectBox.css"/>\r\n';
                 //deps += '<link rel="stylesheet" type="text/css" href="css/iconfont/iconfont.css" />';
                 //deps += '<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />';
                 //deps += '<link rel="stylesheet" type="text/css" href="css/font-awesome.css" />';
                 //deps += '<link rel="stylesheet" type="text/css" href="css/common.css" />';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/appframework.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.actionsheet.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.css3animate.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.passwordBox.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.scroller.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.selectBox.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.touchEvents.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.touchLayer.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.popup.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/appframework.ui.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/fade.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/flip.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/pop.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/slide.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/slideDown.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/slideUp.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.slidemenu.js"></script>';
-                deps += '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.8tiles.js"></script>';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/appframework.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.actionsheet.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.css3animate.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.passwordBox.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.scroller.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.selectBox.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.touchEvents.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.touchLayer.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.popup.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/appframework.ui.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/fade.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/flip.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/pop.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/slide.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/slideDown.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/ui/transitions/slideUp.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.slidemenu.js"></script>\r\n';
+                deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/appframework-2.2/plugins/af.8tiles.js"></script>\r\n';
                 /*deps += '';
                 deps += '';
                 deps += '';
@@ -157,15 +162,16 @@ Tools.tpl = {
                 deps += '<script src="/public/js/lib/appframework-2.2/appframework.js" type="text/javascript"></script>';
                 deps += '<script src="/public/js/lib/appframework-2.2/ui/appframework.ui.js" type="text/javascript"></script>';*/
             }
-            var html = '<html><head>' +
+            var html = '<html>\r\n    <head>\r\n' +
                 deps +
-                '<style type="text/css">' +
+                indent + '<style type="text/css">\r\n' +
                 cmCss.getDoc().getValue() +
-                '</style></head><body>' +
+                indent + '</style>\r\n    </head>\r\n<body>\r\n' +
                 render({list: eval(cmJson.getDoc().getValue())}) +
-                '</body><script type="text/javascript"></script></html>';
+                '\r\n</body>\r\n<script type="text/javascript"></script>\r\n</html>';
 
             $('#tplPreview').attr('srcdoc', html);
+            cmSourceCode.setValue(html);
         });
     }
 };
