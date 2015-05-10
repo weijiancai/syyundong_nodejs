@@ -108,7 +108,8 @@ Tools.tpl = {
                 deps += indent + '<script type="text/javascript" charset="utf-8" src="/public/js/lib/bootstrap-3.3.4/dist/js/bootstrap.js"></script>\r\n';
             }
 
-            if($('#depJqmobi2_2').get(0).checked) {
+            var isJqMobi = $('#depJqmobi2_2').get(0).checked;
+            if(isJqMobi) {
                 deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/main.css"/>\r\n';
                 deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/appframework.css"/>\r\n';
                 deps += indent + '<link rel="stylesheet" type="text/css" href="/public/js/lib/appframework-2.2/css/lists.css"/>\r\n';
@@ -162,15 +163,68 @@ Tools.tpl = {
                 deps += '<script src="/public/js/lib/appframework-2.2/appframework.js" type="text/javascript"></script>';
                 deps += '<script src="/public/js/lib/appframework-2.2/ui/appframework.ui.js" type="text/javascript"></script>';*/
             }
+
+            var data = eval('(' + cmJson.getDoc().getValue() + ')');
+            if($.isArray(data)) {
+                data = {list: data};
+            }
+            var body = render(data);
+            var script = cmJavaScript.getDoc().getValue();
+
+            if(isJqMobi) {
+                body = '<div id="afui" class="ios7">\r\n' +
+                    '<!-- this is the splashscreen you see. -->\r\n' +
+                    '    <div id="splashscreen" class="ui-loader heavy">\r\n' +
+                    '        玩转机场\r\n' +
+                    '        <br>\r\n' +
+                    '        <br> <span class="ui-icon ui-icon-loading spin"></span>\r\n' +
+                    '\r\n' +
+                    '        <h1>正在启动......</h1>\r\n' +
+                    '    </div>\r\n' +
+                    '    <div id="header">\r\n' +
+                    '        <a id="menubadge" onclick="af.ui.toggleSideMenu()" class="menuButton"></a>\r\n' +
+                    '        <a id="switchAirport" href="#switchAirportPanel" class="glyphicon glyphicon-random" style="float: right;"></a>\r\n' +
+                    '    </div>\r\n' +
+                    '    <div id="content">\r\n' +
+                    '        <!-- 首页 -->\r\n' +
+                    body +
+                    '    \r\n</div>\r\n' +
+                    '\r\n' +
+                    '    <div id="navbar">\r\n' +
+                    '        <a href="#airTicketPanel" class="iconfont icon-feijipiao">飞机票</a>\r\n' +
+                    '        <a href="#hbdtPanel" class="iconfont icon-hangbandongtai">航班动态</a>\r\n' +
+                    '        <a href="#tripServicePanel" class="iconfont icon-gongwenbao">行程服务</a>\r\n' +
+                    '        <a href="#" class="iconfont icon-gerenzhongxin">个人中心</a>\r\n' +
+                    '    </div>\r\n' +
+                    '\r\n' +
+                    '    <nav id="main_nav">\r\n' +
+                    '        <ul class="list">' +
+                    '            <li><a class="iconfont icon-zhuce" href="#loginPanel">注册、登录</a></li>\r\n' +
+                    '            <li><a class="iconfont icon-dingdan" href="#">我的订单</a></li>\r\n' +
+                    '            <li><a class="iconfont icon-zancunfuwushixiang" href="#">服务帮助</a></li>\r\n' +
+                    '            <li><a class="iconfont icon-shezhi" href="#settingPanel">设置</a></li>\r\n' +
+                    '            <li><a class="iconfont icon-guanyuabout" href="#">关于</a></li>\r\n' +
+                    '        </ul>\r\n' +
+                    '    </nav>\r\n' +
+                    '</div>\r\n';
+
+                script = '    $.ui.useOSThemes = false;\r\n    $.ui.disableTabBar();\r\n' + script;
+            }
+
             var html = '<html>\r\n    <head>\r\n' +
                 deps +
                 indent + '<style type="text/css">\r\n' +
                 cmCss.getDoc().getValue() +
                 indent + '</style>\r\n    </head>\r\n<body>\r\n' +
-                render({list: eval(cmJson.getDoc().getValue())}) +
-                '\r\n</body>\r\n<script type="text/javascript"></script>\r\n</html>';
+                body +
+                '\r\n</body>\r\n<script type="text/javascript">\r\n' +
+                    script +
+                '\r\n</script>\r\n</html>';
 
-            $('#tplPreview').attr('srcdoc', html);
+            var $tplPreview = $('#tplPreview').attr('srcdoc', html);
+            if(isJqMobi) {
+                $tplPreview.css({width: '375px', height: '667px;', padding: '0'});
+            }
             cmSourceCode.setValue(html);
         });
     }

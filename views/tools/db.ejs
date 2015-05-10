@@ -1,20 +1,27 @@
-<div class="span3">
+<div class="col-md-3">
     <ul id="dbBrowser" class="ztree"></ul>
 </div>
-<div class="span9">
+<div class="col-md-9">
     <div>
         <ul class="nav nav-tabs">
             <li class="active"><a href="#tab_dbTables" data-toggle="tab">表数据</a></li>
             <li class=""><a href="#tab_dbSqlConsole" data-toggle="tab">SQL控制台</a></li>
+            <li class=""><a href="#tab_dbCreateView" data-toggle="tab">创建视图</a></li>
         </ul>
 
         <div class="tab-content">
             <div class="tab-pane active" id="tab_dbTables">
+                <div id="dbQueryForm"></div>
                 <table id="dbTable"></table>
             </div>
 
             <div class="tab-pane " id="tab_dbSqlConsole">
                 <textarea id="dbSqlConsole" style="height: 400px;width: 100%" class="form-control"></textarea>
+            </div>
+
+            <div class="tab-pane " id="tab_dbCreateView">
+                <div></div>
+                <div id="selectTables"></div>
             </div>
         </div>
     </div>

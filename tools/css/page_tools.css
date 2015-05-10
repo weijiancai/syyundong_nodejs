@@ -1,3 +1,15 @@
 label {
     display: inline-block;
 }
+
+#dbBrowser .num {
+    margin-left: 3px;
+    color: firebrick;
+    font-size: 11px;
+}
+
+
+#dbBrowser .comment {
+    color: #888;
+    font-size: 11px;
+}

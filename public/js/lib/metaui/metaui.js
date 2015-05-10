@@ -47,7 +47,7 @@ MU.ui = {
             "lengthChange": false,
             "processing": true,
             "serverSide": false, // 服务器端排序
-            "paginate": false, // 分页
+            "paginate": true, // 分页
             "info": false,
             //"paginationType": "bootstrap",
             //"scrollX": true,
@@ -205,14 +205,13 @@ MU.C_DS_TEXT_AREA = 1;
 MU.C_DS_PASSWORD = 2;
 MU.C_DS_COMBO_BOX = 3;
 // 数据类型
-MU.C_DT_STRING = 0;
-MU.C_DT_INTEGER = 1;
-MU.C_DT_DOUBLE = 2;
-MU.C_DT_NUMBER = 3;
-MU.C_DT_DATE = 4;
-MU.C_DT_EMAIL = 5;
-MU.C_DT_IP = 6;
-MU.C_DT_URL = 7;
+MU.C_DT_STRING = ['varchar', 'char'];
+MU.C_DT_INTEGER = ['int'];
+MU.C_DT_NUMBER = ['number'];
+MU.C_DT_DATE = ['date', 'datetime'];
+MU.C_DT_EMAIL = ['email'];
+MU.C_DT_IP = ['ip'];
+MU.C_DT_URL = ['url'];
 // 查询模式
 MU.C_QM_EQUAL = 0;
 MU.C_QM_NOT_EQUAL = 1;
@@ -226,7 +225,7 @@ MU.C_QM_LEFT_LIKE = 8;
 MU.C_QM_RIGHT_LIKE = 9;
 
 
-MU.ui.DataForm = function() {
+MU.ui.DataForm = function($conainer) {
     this.id = null;
     this.name = null;
     this.formType = MU.C_FT_EDIT;
@@ -255,7 +254,7 @@ MU.ui.DataForm = function() {
         var fieldList = this.fieldList;
         for(var i = 1; i < columns.length; i++) {
             var column = columns[i];
-            fieldList.push({name: column.data, displayName: column.title});
+            fieldList.push({name: column.data, displayName: column.title, dataType: column.dataType});
         }
 
         return this.gen();
@@ -303,6 +302,7 @@ MU.ui.DataForm = function() {
         var field, rules = {};
         for(var i = 0; i < fieldList.length; i++) {
             field = fieldList[i];
+            field.width = field.width || this.colWidth;
             if(this.includeFields && this.includeFields.length > 0 && $.inArray(field.name, this.includeFields) < 0) {
                 continue;
             }
@@ -338,25 +338,31 @@ MU.ui.DataForm = function() {
             if(field.required) {
                 rules[field.name] = 'required';
             }
-            if(MU.C_DT_DATE == field.dataType) {
+            if(isDataType(MU.C_DT_DATE, field.dataType)) {
                 rules[field.name] = 'date';
-            } else if(MU.C_DT_DOUBLE == field.dataType) {
+            } else if(isDataType(MU.C_DT_INTEGER, field.dataType)) {
                 rules[field.name] = 'number';
-            } else if(MU.C_DT_INTEGER == field.dataType) {
+            } else if(isDataType(MU.C_DT_NUMBER, field.dataType)) {
                 rules[field.name] = 'number';
-            } else if(MU.C_DT_NUMBER == field.dataType) {
-                rules[field.name] = 'number';
-            } else if(MU.C_DT_URL == field.dataType) {
+            } else if(isDataType(MU.C_DT_URL, field.dataType)) {
                 rules[field.name] = 'url';
-            } else if(MU.C_DT_IP == field.dataType) {
+            } else if(isDataType(MU.C_DT_IP, field.dataType)) {
                 rules[field.name] = 'ip';
-            } else if(MU.C_DT_EMAIL == field.dataType) {
+            } else if(isDataType(MU.C_DT_EMAIL, field.dataType)) {
                 rules[field.name] = 'email';
             }
         }
 
         $form = $('<form></form>').append(formGrid.gen());
         $form.validate({rules: rules});
+        if($conainer) {
+            $conainer.append($form);
+        }
+        // 日期控件
+        $form.find('.dateRange').daterangepicker({
+            format: 'YYYY-MM-DD'
+        });
+
         return $form;
 
         function getInputNode(field, colCount) {
@@ -379,19 +385,17 @@ MU.ui.DataForm = function() {
                     return getFormInputTd(field, 'select');
                 }
             } else {
-                if(MU.C_DT_DATE == field.dataType) {
+                if(isDataType(MU.C_DT_DATE, field.dataType)) {
                     return getFormInputTd(field, 'date');
-                } else if(MU.C_DT_DOUBLE == field.dataType) {
-                    return getFormInputTd(field, "double");
-                } else if(MU.C_DT_INTEGER == field.dataType) {
+                } else if(isDataType(MU.C_DT_INTEGER, field.dataType)) {
                     return getFormInputTd(field, "int");
-                } else if(MU.C_DT_NUMBER == field.dataType) {
+                } else if(isDataType(MU.C_DT_NUMBER, field.dataType)) {
                     return getFormInputTd(field, "number");
-                } else if(MU.C_DT_URL == field.dataType) {
+                } else if(isDataType(MU.C_DT_URL, field.dataType)) {
                     return getFormInputTd(field, "url");
-                } else if(MU.C_DT_IP == field.dataType) {
+                } else if(isDataType(MU.C_DT_IP, field.dataType)) {
                     return getFormInputTd(field, "ip");
-                } else if(MU.C_DT_EMAIL == field.dataType) {
+                } else if(isDataType(MU.C_DT_EMAIL, field.dataType)) {
                     return getFormInputTd(field, "email");
                 } else {
                     if(field.isSingleLine) {
@@ -452,14 +456,16 @@ MU.ui.DataForm = function() {
                 $input = $('<select></select>');
             } else if('text' == type || 'date' == type || 'email' == type || 'ip' == type || 'url' == type || 'int' == type || 'double' == type || 'number' == type) {
                 if('date' == type) {
-                    $input.addClass('dateField');
-                    if(self.formType == MU.C_FT_QUERY) {
-                        var $div = $('<div></div>');
-                        $('<input type="text">').attr('id', field.name).attr('name', 'D_start' + inputName).attr('queryMode', MU.C_QM_GREATER_EQUAL).appendTo($div);
+                    $input.addClass('dateRange');
+                    /*if(self.formType == MU.C_FT_QUERY) {
+                        var $div = $('<div class="flex"></div>');
+                        var $startGroup = $('<div class="input-group"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span></div>').appendTo($div);
+                        $('<input class="form-control date" type="text" data-date-format="yyyy-mm-dd">').attr('id', field.name).attr('name', 'D_start' + inputName).attr('queryMode', MU.C_QM_GREATER_EQUAL).prependTo($startGroup);
                         $div.append('&nbsp;至&nbsp;');
-                        $('<input type="text">').attr('id', field.name).attr('name', 'D_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).appendTo($div);
+                        var $endGroup = $('<div class="input-group"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span></div>').appendTo($div);
+                        $('<input class="form-control date" type="text">').attr('id', field.name).attr('name', 'D_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).prependTo($endGroup);
                         return $div;
-                    }
+                    }*/
                 }
 
                 $input.attr('type', type);
@@ -476,11 +482,11 @@ MU.ui.DataForm = function() {
                 if('100%' == field.width) {
                     width = '100%';
                 } else {
-                    if('date' == type && self.formType == MU.MU.C_FT_QUERY) {
+                    /*if('date' == type && self.formType == MU.MU.C_FT_QUERY) {
                         width = (field.width/2 - 10) + "px";
                     } else {
                         width = field.width + "px";
-                    }
+                    }*/
                 }
                 $input.css('width', width);
             }
@@ -489,10 +495,20 @@ MU.ui.DataForm = function() {
             }
 
             if(self.formType == MU.C_FT_QUERY) {
-                return $('<div></div>').append($input).append(getQueryModeLink(field.queryMode));
+                var $div = $('<div></div>');
+                var $group = $('<div class="input-group"><span class="input-group-addon"><i class="">' + getQueryModeLink(field.queryMode) + '</i></span></div>').appendTo($div);
+                if('date' == type) {
+                    $group.find('i').text('').addClass('glyphicon glyphicon-calendar');
+                }
+                $input.prependTo($group);
+                return $div;
             }
 
             return $input;
+        }
+
+        function isDataType(dataTypeArray, dataType) {
+            return $.inArray(dataType, dataTypeArray) > -1;
         }
 
         /**

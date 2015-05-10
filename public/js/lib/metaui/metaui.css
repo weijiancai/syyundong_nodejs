@@ -4,3 +4,6 @@
 .gridPane td {
     padding: 5px 0;
 }
+.gridPane .form-control {
+    display: inline;
+}

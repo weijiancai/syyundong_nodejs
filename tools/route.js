@@ -28,7 +28,9 @@ router.post('/dbBrowser', function(req, res, next) {
 
 router.post('/dbRetrieve', function(req, res, next) {
     var id = req.body.id;
-    db.query('SELECT * FROM ' + id, function(data) {
+    var datasource = id.split('.')[0];
+    db.setDataSource(config.getDataSource(datasource));
+    db.query('SELECT * FROM ' + id.substr(datasource.length + 1), function(data) {
         res.send(data);
     });
 });

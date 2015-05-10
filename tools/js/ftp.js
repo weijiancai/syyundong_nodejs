@@ -59,6 +59,7 @@ Tools.ftp = {
                 })
             });
         });
+        ftpTable.showPaginate(false);
         ftpTable.setUrl('/tools/ftpBrowser');
         ftpTable.query({path: '/'});
 

@@ -38,13 +38,12 @@ $(function() {
     }).eq(0).find('a').data('value');
     sportTable.query({pid: firstSportCategory});
 
-    var form = new MU.ui.DataForm();
+    var form = new MU.ui.DataForm($('#TestForm'));
     form.includeFields = ['name'];
     form.colCount = 5;
     form.fieldList = [
         {name: 'name', displayName: '赛事分类：', required: true}
     ];
-    $('#TestForm').append(form.gen());
     $('#btnTestSubmit').click(function() {
         form.submit();
     });
