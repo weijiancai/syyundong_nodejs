@@ -7,3 +7,10 @@
 .gridPane .form-control {
     display: inline;
 }
+.gridPane .input-group-addon {
+    min-width: 39px;
+}
+.gridPane .queryMode i {
+    margin: 0 -5px;
+    font-style: normal;
+}

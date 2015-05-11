@@ -1,7 +1,8 @@
 Tools.DB = function() {
     var self = this;
 
-    var dt = new MU.ui.DataTable($('#dbTable'));
+    var crud = new MU.ui.DataCrud($('#tab_dbTables'));
+    var dt = crud.dataTable();
     dt.setHeight(600);
     dt.setUrl('/tools/dbRetrieve');
 
@@ -69,12 +70,10 @@ Tools.DB = function() {
         }
 
         dt.setColumns(columns);
-        dt.query({id: id});
+        crud.query({id: id});
 
         // 初始化表单
-        queryForm = new MU.ui.DataForm($('#dbQueryForm'));
-        queryForm.colCount = 3;
-        queryForm.formType = MU.C_FT_QUERY;
+        queryForm = crud.queryForm();
         queryForm.genByDataTable(dt);
     }
 };

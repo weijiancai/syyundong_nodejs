@@ -232,7 +232,7 @@ MU.ui.DataForm = function($conainer) {
     this.colCount = 3;
     this.colWidth = 185;
     this.labelGap = 5;
-    this.fieldGap = 5;
+    this.fieldGap = 15;
     this.hgap = null;
     this.vgap = null;
     this.fieldList = [];
@@ -241,6 +241,7 @@ MU.ui.DataForm = function($conainer) {
     this.width = null;
     this.height = null;
     this.includeFields = [];
+    var queryMode = ['=', '!=', '<', '<=', '>', '>=', '%%', '*%', '%*'];
 
     var self = this;
     var $form;
@@ -354,14 +355,25 @@ MU.ui.DataForm = function($conainer) {
         }
 
         $form = $('<form></form>').append(formGrid.gen());
-        $form.validate({rules: rules});
+        if(this.formType == MU.C_FT_EDIT) {
+            $form.validate({rules: rules});
+        }
+
         if($conainer) {
-            $conainer.append($form);
+            $conainer.empty().append($form);
         }
         // 日期控件
         $form.find('.dateRange').daterangepicker({
             format: 'YYYY-MM-DD'
         });
+        // 查询条件切换
+        if(this.formType == MU.C_FT_QUERY) {
+            $form.find('.queryMode').click(function() {
+                var mode = $(this).data('mode');
+                var newMode = (parseInt(mode) + 1) % queryMode.length;
+                $(this).data('mode', newMode).find('i').text(queryMode[newMode]);
+            });
+        }
 
         return $form;
 
@@ -466,9 +478,19 @@ MU.ui.DataForm = function($conainer) {
                         $('<input class="form-control date" type="text">').attr('id', field.name).attr('name', 'D_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).prependTo($endGroup);
                         return $div;
                     }*/
+                } else if('int' == type || 'double' == type || 'number' == type) {
+                    if(self.formType == MU.C_FT_QUERY) {
+                        var $div = $('<div class="flex"></div>');
+                        $('<input class="form-control" type="text">').attr('id', field.name).attr('name', 'N_start' + inputName).attr('queryMode', MU.C_QM_GREATER_EQUAL).appendTo($div);
+                        $div.append('<div style="line-height: 34px;width: 50px;text-align: center">至</div>');
+                        $('<input class="form-control" type="text">').attr('id', field.name).attr('name', 'N_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).appendTo($div);
+                        return $div;
+                    }
                 }
 
-                $input.attr('type', type);
+                if('date' != type) {
+                    $input.attr('type', type);
+                }
             }
             $input.addClass('form-control').attr('id', field.name).attr('name', inputName);
             if(field.readonly) {
@@ -495,10 +517,13 @@ MU.ui.DataForm = function($conainer) {
             }
 
             if(self.formType == MU.C_FT_QUERY) {
-                var $div = $('<div></div>');
-                var $group = $('<div class="input-group"><span class="input-group-addon"><i class="">' + getQueryModeLink(field.queryMode) + '</i></span></div>').appendTo($div);
+                $div = $('<div></div>');
+                var mode = field.queryMode || '0';
+                var $group = $('<div class="input-group"><span class="input-group-addon"><i class="">' + queryMode[parseInt(mode)] + '</i></span></div>').appendTo($div);
                 if('date' == type) {
                     $group.find('i').text('').addClass('glyphicon glyphicon-calendar');
+                } else if('text' == type || 'textarea' == type || 'email' == type || 'ip' == type || 'url' == type) {
+                    $group.find('.input-group-addon').addClass('queryMode').data('mode', mode);
                 }
                 $input.prependTo($group);
                 return $div;
@@ -509,38 +534,6 @@ MU.ui.DataForm = function($conainer) {
 
         function isDataType(dataTypeArray, dataType) {
             return $.inArray(dataType, dataTypeArray) > -1;
-        }
-
-        /**
-         * 获得查询模式超链接
-         *
-         * @param queryMode
-         */
-        function getQueryModeLink(queryMode) {
-            switch (queryMode) {
-                case 0:
-                    return '<a href="#" class="queryMode equal">=</a>';
-                case 1:
-                    return '<a href="#" class="queryMode equal">&lt;&gt;</a>';
-                case 2:
-                    return '<a href="#" class="queryMode equal">&lt;</a>';
-                case 3:
-                    return '<a href="#" class="queryMode equal">&lt;=</a>';
-                case 4:
-                    return '<a href="#" class="queryMode equal">&gt;</a>';
-                case 5:
-                    return '<a href="#" class="queryMode equal">&gt;=</a>';
-                case 6:
-                    return '<a href="#" class="queryMode equal">=</a>';
-                case 7:
-                    return '<a href="#" class="queryMode equal">%%</a>';
-                case 8:
-                    return '<a href="#" class="queryMode equal">*%</a>';
-                case 9:
-                    return '<a href="#" class="queryMode equal">%*</a>';
-                default:
-                    return '<a href="#" class="queryMode equal">=</a>';
-            }
         }
     }
 };
@@ -614,4 +607,36 @@ MU.ui.Dialog = function() {
     this.close = function() {
         $dialog.modal('hide');
     }
+};
+
+// 增删改查
+MU.ui.DataCrud = function($container) {
+    var $div = $('<div class="dataCrud"></div>').appendTo($container);
+    var $queryForm = $('<div class="queryForm"></div>').appendTo($div);
+    var $buttons = $('<div class="buttons"></div>').appendTo($div);
+    var $dataTable = $('<table class="dataTable"></table>').appendTo($div);
+    var self = this;
+
+    var dt = new MU.ui.DataTable($dataTable);
+    var queryForm = new MU.ui.DataForm($queryForm);
+    queryForm.colCount = 3;
+    queryForm.formType = MU.C_FT_QUERY;
+
+    // 查询
+    var $btnQuery = $('<button type="button" class="btn btn-primary">查询</button>').appendTo($buttons);;
+    $btnQuery.click(function() {
+        self.query();
+    });
+
+    this.dataTable = function() {
+        return dt;
+    };
+
+    this.queryForm = function() {
+        return queryForm;
+    };
+
+    this.query = function(param) {
+        dt.query(param);
+    };
 };
