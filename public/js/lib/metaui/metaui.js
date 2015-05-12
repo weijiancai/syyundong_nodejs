@@ -365,6 +365,8 @@ MU.ui.DataForm = function($conainer) {
         // 日期控件
         $form.find('.dateRange').daterangepicker({
             format: 'YYYY-MM-DD'
+        }).on('apply.daterangepicker', function(ev, picker) {
+            $(this).data('star', picker.startDate.format('YYYY-MM-DD')).data('end', picker.endDate.format('YYYY-MM-DD'));
         });
         // 查询条件切换
         if(this.formType == MU.C_FT_QUERY) {
@@ -535,6 +537,34 @@ MU.ui.DataForm = function($conainer) {
         function isDataType(dataTypeArray, dataType) {
             return $.inArray(dataType, dataTypeArray) > -1;
         }
+    };
+
+    // 获得查询条件
+    this.getConditions = function() {
+        var array = [];
+        if($form) {
+            $form.find('input, textarea, select').each(function() {
+                var $this = $(this);
+                var name = $this.attr('name');
+                var value = $this.val();
+                if(name && value) {
+                    var mode = $this.parent().find('.queryMode').data(mode) || '0';
+                    if(MU.UString.startsWith(name, 'N_start')) {
+                        name = name.substr(7);
+                        mode = '5';
+                    } else if(MU.UString.startsWith(name, 'N_end')) {
+                        name = name.substr(5);
+                        mode = '2';
+                    } else if($this.hasClass('dateRange')) { // 日期范围
+                        array.push({name: name, value: $this.data('star'), mode: '>='});
+                        array.push({name: name, value: $this.data('end'), mode: '<'});
+                        return;
+                    }
+                    array.push({name: name, value: value, mode: queryMode[parseInt(mode)]});
+                }
+            });
+        }
+        return array;
     }
 };
 
@@ -616,6 +646,7 @@ MU.ui.DataCrud = function($container) {
     var $buttons = $('<div class="buttons"></div>').appendTo($div);
     var $dataTable = $('<table class="dataTable"></table>').appendTo($div);
     var self = this;
+    var appendConditions = [];
 
     var dt = new MU.ui.DataTable($dataTable);
     var queryForm = new MU.ui.DataForm($queryForm);
@@ -637,6 +668,22 @@ MU.ui.DataCrud = function($container) {
     };
 
     this.query = function(param) {
-        dt.query(param);
+        param = param || {};
+        var conditions = queryForm.getConditions().concat(appendConditions);
+        dt.query($.extend(param, {conditions: JSON.stringify(conditions)}));
     };
+
+    this.setAppendConditions = function(conditions) {
+        if($.isArray(conditions)) {
+            appendConditions = appendConditions.concat(conditions);
+        } else {
+            appendConditions.push(conditions);
+        }
+    };
+};
+
+MU.UString = {
+    startsWith: function(str, prefix) {
+        return str.substr(0, prefix.length) == prefix;
+    }
 };
