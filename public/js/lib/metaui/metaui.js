@@ -52,7 +52,7 @@ MU.ui = {
             //"paginationType": "bootstrap",
             //"scrollX": true,
             "columns": [],
-            //"ajax": {url: '', type: 'POST', data: {}},
+            "ajax": {url: '', type: 'POST', data: {}},
             //"retrieve": true,
             "destroy": true,
             "initComplete": function(setting) {
@@ -75,6 +75,7 @@ MU.ui = {
 
                     // 选中行
                     $container.find('tbody').on( 'click', 'tr', function () {
+                        console.log('click tr' + this);
                         // 获得行号
                         var row = dt.row(this).index();
                         if ($(this).hasClass('selected')) {
@@ -84,10 +85,12 @@ MU.ui = {
                         } else {
                             dt.$('tr.selected').removeClass('selected');
                             $(this).addClass('selected');
-                            self.setValue(row, 0, true);
+                            self.setValue(row, 0, 'T');
+                            //self.setValue(row, 1, 12);
                             selectedRow = dt.row(this).data();
                         }
                     } );
+
 
                     // 回调初始化完成
                     if(initComplete) {
@@ -97,6 +100,22 @@ MU.ui = {
                 }
             }
         };
+
+        $container.on('init.dt', function() {
+            // 复选框全选
+            $(dt.table().header()).find('.group-checkable').change(function () {
+                var set = $(this).attr("data-set");
+                var checked = $(this).is(":checked");
+                $container.find(set).each(function () {
+                    if (checked) {
+                        $(this).attr("checked", "checked");
+                    } else {
+                        $(this).removeAttr('checked');
+                    }
+                });
+                $.uniform.update(set);
+            });
+        });
 
         this.showPaginate = function(isShow) {
             option.paginate = isShow;
@@ -110,8 +129,9 @@ MU.ui = {
             option.searching = isShow;
         };
 
-        this.setUrl = function(url) {
-            option.url = url;
+        this.setUrl = function(url, params) {
+            option.ajax.url = url;
+            option.ajax.data = params;
         };
 
         this.setHeight = function(height) {
@@ -124,13 +144,12 @@ MU.ui = {
                     var check = data ? 'checked="checked"' : '';
                     return '<input type="checkbox" class="checkboxes" ' + check + '/>';
                 },
-                "targets": 0,
                 title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
                 orderable: false,
-                width: 1,
-                className: 'sorting_disabled',
-                type: 'checkbox',
-                orderSequence: []
+                //width: 1,
+                className: 'sorting_disabled'
+                //type: 'string'
+                //orderSequence: []
             });
             option.columns = columns;
             if(columns.length > 0) {
@@ -138,15 +157,16 @@ MU.ui = {
             }
         };
 
-        this.initDataTable = function() {
-            dt = $container.DataTable(option);
-            /*if (!dt) {
-                dt = $container.DataTable(option);
-            }*/
+        this.applyOption = function() {
+            if(dt) {
+                dt.destroy();
+                // 清空列
+                $container.empty();
+            }
+            dt = $container.DataTable($.extend({}, option));
         };
 
         this.loadData = function(data) {
-            this.initDataTable();
             dt.clear();
             dt.rows.add(data.data ? data.data : data).draw();
             // 加载数据完成后回调
@@ -156,10 +176,8 @@ MU.ui = {
         };
 
         this.query = function(params) {
-            this.initDataTable();
-            $.post(option.url, params, function(data) {
-                self.loadData(data);
-            });
+            option.ajax.data = params;
+            dt.ajax.reload();
         };
 
         this.getOption = function() {
@@ -184,6 +202,14 @@ MU.ui = {
          */
         this.getSelectedRow = function() {
             return selectedRow;
+        };
+
+        /**
+         * 获得DataTables API
+         * @returns {*}
+         */
+        this.getApi = function() {
+            return dt;
         };
 
         this.onInitComplete = function(callback) {
@@ -251,6 +277,7 @@ MU.ui.DataForm = function($conainer) {
     };
 
     this.genByDataTable = function(dt) {
+        this.fieldList = [];
         var columns = dt.getOption().columns;
         var fieldList = this.fieldList;
         for(var i = 1; i < columns.length; i++) {
@@ -548,7 +575,7 @@ MU.ui.DataForm = function($conainer) {
                 var name = $this.attr('name');
                 var value = $this.val();
                 if(name && value) {
-                    var mode = $this.parent().find('.queryMode').data(mode) || '0';
+                    var mode = $this.parent().find('.queryMode').data('mode') || '0';
                     if(MU.UString.startsWith(name, 'N_start')) {
                         name = name.substr(7);
                         mode = '5';

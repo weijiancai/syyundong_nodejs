@@ -28,9 +28,25 @@ router.post('/dbBrowser', function(req, res, next) {
 
 router.post('/dbRetrieve', function(req, res, next) {
     var id = req.body.id || req.query.id;
+    var start = req.body.start || 0; // 第几页
+    var length = req.body.length || 10; // 每页行数
+
     var datasource = id.split('.')[0];
     db.setDataSource(config.getDataSource(datasource));
-    db.query('SELECT * FROM ' + id.substr(datasource.length + 1), function(data) {
+    var conditions = eval('(' + req.body.conditions + ')');
+    var where = '';
+    if(conditions && conditions.length > 0) {
+        where = ' where ';
+        for(var i = 0; i < conditions.length; i++) {
+            var obj = conditions[i];
+            where += obj['name'] + obj['mode'] + "'" + obj['value'] + "'";
+            if(i < conditions.length - 1) {
+                where += ' and ';
+            }
+        }
+    }
+    db.queryByPage('SELECT * FROM ' + id.substr(datasource.length + 1) + where, start, length, function(data) {
+        data.draw = parseInt(req.body.draw) || 1;
         res.send(data);
     });
 });

@@ -2,8 +2,6 @@ Tools.DB = function() {
     var self = this;
 
     var crud = new MU.ui.DataCrud($('#tab_dbTables'));
-    var dt = crud.dataTable();
-    dt.setHeight(600);
 
     // 查询表单
     var queryForm;
@@ -68,9 +66,12 @@ Tools.DB = function() {
             columns.push({data: name, title: name, dataType: column.dataType});
         }
 
+        var dt = crud.dataTable();
+        dt.setHeight(600);
         dt.setColumns(columns);
         dt.setUrl('/tools/dbRetrieve?id=' + id);
-        crud.query({id: id});
+        dt.applyOption();
+        //crud.query({id: id});
 
         // 初始化表单
         queryForm = crud.queryForm();
