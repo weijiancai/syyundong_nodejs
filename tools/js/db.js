@@ -63,7 +63,7 @@ Tools.DB = function() {
         for(var i = 0; i < children.length; i++) {
             var column = children[i];
             var name = column.id.split('.')[3];
-            columns.push({data: name, title: name, dataType: column.dataType});
+            columns.push({data: name, title: name, dataType: column.dataType, className: column.dataType});
         }
 
         var dt = crud.dataTable();

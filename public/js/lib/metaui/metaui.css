@@ -1,8 +1,10 @@
 .gridPane {
     width: 100%;
+    overflow: hidden;
 }
 .gridPane td {
     padding: 5px 0;
+    max-width: 200px;
 }
 .gridPane .form-control {
     display: inline;

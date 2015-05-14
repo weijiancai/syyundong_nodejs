@@ -39,8 +39,8 @@ MU.ui = {
      */
     DataTable: function($container) {
         var dt, self = this, initComplete, loadDataEnd;
-        var isInit; // 是否已初始化
         var selectedRow;
+        var isMultiSelect; // 是否允许多选，默认单选
 
         var option = {
             "searching": false,
@@ -56,35 +56,12 @@ MU.ui = {
             //"retrieve": true,
             "destroy": true,
             "initComplete": function(setting) {
-                if(!isInit) {
-                    // 选中行
-                    $container.find('tbody').on( 'click', 'tr', function () {
-                        console.log('click tr' + this);
-                        // 获得行号
-                        var row = dt.row(this).index();
-                        if ($(this).hasClass('selected')) {
-                            $(this).removeClass('selected');
-                            self.setValue(row, 0, false);
-                            selectedRow = null;
-                        } else {
-                            dt.$('tr.selected').removeClass('selected');
-                            $(this).addClass('selected');
-                            self.setValue(row, 0, 'T');
-                            //self.setValue(row, 1, 12);
-                            selectedRow = dt.row(this).data();
-                        }
-                    });
 
-                    // 回调初始化完成
-                    if(initComplete) {
-                        initComplete();
-                    }
-                    isInit = true;
-                }
             }
         };
 
         $container.on('init.dt', function() {
+            console.log('init.dt');
             var $con = $(dt.table().container());
             $con.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
             $con.find("select, input, a.button, button").uniform();
@@ -103,7 +80,37 @@ MU.ui = {
                 });
                 $.uniform.update(set);
             });
-        });
+
+            // 选中行
+            $container.find('tbody').on( 'click', 'tr', function () {
+                console.log('click tr' + this);
+                if(!isMultiSelect) {
+                    $container.find('tbody tr.selected').each(function() {
+                        $(this).removeClass('selected');
+                        var row = dt.row(this).index();
+                        self.setValue(row, 0, false);
+                    });
+                }
+                // 获得行号
+                var row = dt.row(this).index();
+                if ($(this).hasClass('selected')) {
+                    $(this).removeClass('selected');
+                    self.setValue(row, 0, false);
+                } else {
+                    //dt.$('tr.selected').removeClass('selected');
+                    $(this).addClass('selected');
+                    self.setValue(row, 0, true);
+                }
+            });
+
+            // 回调初始化完成
+            if(initComplete) {
+                initComplete();
+            }
+            console.log('init end');
+        }).on('preXhr.dt', function (e, settings, data ) {
+            $.extend(data, option.ajax.data);
+        } );
 
         this.showPaginate = function(isShow) {
             option.paginate = isShow;
@@ -124,6 +131,14 @@ MU.ui = {
 
         this.setHeight = function(height) {
             option.scrollY = height;
+        };
+
+        /**
+         * 是否允许多选，默认单选
+         * @param flag
+         */
+        this.setMultiSelect = function(flag) {
+            isMultiSelect = flag;
         };
 
         this.setColumns = function(columns) {
@@ -180,7 +195,7 @@ MU.ui = {
          * @param value 值
          */
         this.setValue = function(row, col, value) {
-            dt.cell(row, col).data(value).draw();
+            dt.cell(row, col).data(value);
         };
 
         /**
@@ -189,7 +204,11 @@ MU.ui = {
          * @returns {Object}
          */
         this.getSelectedRow = function() {
-            return selectedRow;
+            var selectedRows = [];
+            $(dt.table().body()).find('tr.selected').each(function() {
+                selectedRows.push(dt.row(this).data());
+            });
+            return selectedRows;
         };
 
         /**
@@ -658,12 +677,15 @@ MU.ui.Dialog = function() {
 MU.ui.DataCrud = function($container) {
     var $div = $('<div class="dataCrud"></div>').appendTo($container);
     var $queryForm = $('<div class="queryForm"></div>').appendTo($div);
-    var $buttons = $('<div class="buttons"></div>').appendTo($div);
+    var $buttons = $('<div class="buttons" style="display: none;"></div>').appendTo($div);
     var $dataTable = $('<table class="dataTable"></table>').appendTo($div);
     var self = this;
     var appendConditions = [];
 
     var dt = new MU.ui.DataTable($dataTable);
+    dt.onInitComplete(function() {
+        $buttons.show();
+    });
     var queryForm = new MU.ui.DataForm($queryForm);
     queryForm.colCount = 3;
     queryForm.formType = MU.C_FT_QUERY;

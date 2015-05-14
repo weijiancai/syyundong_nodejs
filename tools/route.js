@@ -39,7 +39,16 @@ router.post('/dbRetrieve', function(req, res, next) {
         where = ' where ';
         for(var i = 0; i < conditions.length; i++) {
             var obj = conditions[i];
-            where += obj['name'] + obj['mode'] + "'" + obj['value'] + "'";
+            var mode = obj['mode'];
+            if(mode == '%%') {
+                where += obj['name'] + " like '%" + obj['value'] + "%'";
+            } else if(mode == '*%') {
+                where += obj['name'] + " like '" + obj['value'] + "%'";
+            } else if(mode == '%*') {
+                where += obj['name'] + " like '%" + obj['value'] + "'";
+            } else {
+                where += obj['name'] + obj['mode'] + "'" + obj['value'] + "'";
+            }
             if(i < conditions.length - 1) {
                 where += ' and ';
             }
