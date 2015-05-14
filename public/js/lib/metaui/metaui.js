@@ -57,22 +57,6 @@ MU.ui = {
             "destroy": true,
             "initComplete": function(setting) {
                 if(!isInit) {
-                    $container.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
-                    $container.find("select, input, a.button, button").uniform();
-
-                    $container.find('.group-checkable').change(function () {
-                        var checked = $(this).is(":checked");
-                        $container.find('.checkboxes').each(function (index) {
-                            console.log(this);
-                            if (checked) {
-                                $(this).attr("checked", true);
-                            } else {
-                                $(this).attr("checked", false);
-                            }
-                            $.uniform.update($(this));
-                        });
-                    });
-
                     // 选中行
                     $container.find('tbody').on( 'click', 'tr', function () {
                         console.log('click tr' + this);
@@ -89,8 +73,7 @@ MU.ui = {
                             //self.setValue(row, 1, 12);
                             selectedRow = dt.row(this).data();
                         }
-                    } );
-
+                    });
 
                     // 回调初始化完成
                     if(initComplete) {
@@ -102,8 +85,13 @@ MU.ui = {
         };
 
         $container.on('init.dt', function() {
+            var $con = $(dt.table().container());
+            $con.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
+            $con.find("select, input, a.button, button").uniform();
+
             // 复选框全选
-            $(dt.table().header()).find('.group-checkable').change(function () {
+            var $groupCheck = $con.find('.group-checkable');
+            $groupCheck.change(function () {
                 var set = $(this).attr("data-set");
                 var checked = $(this).is(":checked");
                 $container.find(set).each(function () {
