@@ -16,3 +16,56 @@
     margin: 0 -5px;
     font-style: normal;
 }
+
+.queryForm form {
+    overflow: hidden;
+}
+.queryForm .moreConditions {
+    margin-top:5px;
+    border-top: 1px solid #ddd;
+    position: relative;
+    text-align: center;
+    top: -1px;
+    transition: border-color 0.15s ease-in-out 0s;
+}
+
+.queryForm .moreConditions a {
+    background: none repeat scroll 0 0 #fff;
+    border-color: #fff #ddd #ddd;
+    border-style: solid;
+    border-width: 1px;
+    color: #333;
+    cursor: pointer;
+    display: inline-block;
+    height: 28px;
+    line-height: 28px;
+    margin-top: -1px;
+    padding: 0 40px 0 20px;
+    position: relative;
+    transition: border-color 0.15s ease-in-out 0s;
+    text-decoration: none;
+}
+
+.queryForm .moreConditions i {
+    display: inline-block;
+    height: 20px;
+    position: absolute;
+    right: 16px;
+    top: 4px;
+    width: 20px;
+    color: #0000cc;
+}
+
+
+.queryForm .moreConditions:hover {
+    border-color: #e4393c;
+}
+
+.queryForm .moreConditions:hover a {
+    border-color: #fff #e4393c #e4393c;
+    color: #e4393c;
+}
+
+.queryForm .moreConditions:hover  i {
+    background-position: 4px -10px;
+}

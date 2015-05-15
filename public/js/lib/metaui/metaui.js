@@ -409,6 +409,24 @@ MU.ui.DataForm = function($conainer) {
                 var newMode = (parseInt(mode) + 1) % queryMode.length;
                 $(this).data('mode', newMode).find('i').text(queryMode[newMode]);
             });
+
+            // 查询条件多件多于3行的，增加查看更多多件
+            if($conainer && formGrid.getRows() > 3) {
+                $form.css({'height': '135px'});
+                var $moreConditions = $('<div class="moreConditions"><a>查看更多条件<i class="glyphicon glyphicon-menu-down"></i></a></div>');
+                $conainer.append($moreConditions);
+                $moreConditions.find('a').click(function() {
+                    var $this = $(this);
+                    var $i = $(this).find('i');
+                    if($i.hasClass('glyphicon-menu-down')) { // 展开
+                        $this.html('收起<i class="glyphicon glyphicon-menu-up"></i>');
+                        $form.css({'height': 'auto'});
+                    } else { // 收起
+                        $this.html('查看更多条件<i class="glyphicon glyphicon-menu-down"></i>');
+                        $form.css({'height': '135px'});
+                    }
+                });
+            }
         }
 
         return $form;
@@ -625,6 +643,14 @@ MU.ui.GuidePane = function(hgap, vgap) {
         }
 
         return $table;
+    };
+
+    /**
+     * 获得行的长度
+     * @returns {Number}
+     */
+    this.getRows = function() {
+        return table.length;
     }
 };
 
