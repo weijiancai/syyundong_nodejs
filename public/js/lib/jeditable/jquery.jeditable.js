@@ -343,14 +343,14 @@
                                   dataType: 'html',
                                   url     : settings.target,
                                   success : function(result, status) {
-                                      /*if (ajaxoptions.dataType == 'html') {
+                                      if (ajaxoptions.dataType == 'html') {
                                         $(self).html(result);
-                                      }*/
+                                      }
                                       self.editing = false;
                                       callback.apply(self, [result, settings]);
-                                      /*if (!$.trim($(self).html())) {
+                                      if (!$.trim($(self).html())) {
                                           $(self).html(settings.placeholder);
-                                      }*/
+                                      }
                                   },
                                   error   : function(xhr, status, error) {
                                       onerror.apply(form, [settings, self, xhr]);
