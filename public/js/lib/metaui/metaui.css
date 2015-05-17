@@ -69,3 +69,41 @@
 .queryForm .moreConditions:hover  i {
     background-position: 4px -10px;
 }
+
+.buttons button {
+    margin-right: 10px;
+}
+
+input.text-error, textarea.text-error, select.text-error {
+    border: 1px solid #b94a48;
+    color: #b94a48;
+}
+
+.dataTable td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dataTable td > a {
+    display: block;
+}
+.dataTable .varchar {
+    min-width: 80px;
+    max-width: 150px;
+}
+.dataTable .text {
+    min-width: 80px;
+    max-width: 200px;
+}
+.dataTable .int, .dataTable .decimal {
+    max-width: 80px;
+    text-align: center;
+}
+.dataTable .datetime {
+    max-width: 130px;
+    text-align: center;
+}
+.dataTable .char {
+    max-width: 80px;
+    text-align: center;
+}

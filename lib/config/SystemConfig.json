@@ -1,1 +1,1 @@
-{"dataSource":{"__system__":{"dbType":"mysql","host":"localhost","port":"3306","user":"root","password":"root","database":"syyundong"},"sh":{"dbType":"sqlServer","host":"119.254.9.102","port":"2005","user":"SHLM","password":"SHLM&yhdt","database":"yhbis_mobile"}}}
+{"dataSource":{"__system__":{"dbType":"mysql","host":"localhost","port":"3306","user":"root","password":"root","database":"syyundong"},"local_vm":{"name":"local_vm","dbType":"sqlServer","host":"192.168.58.131","port":"1433","user":"sa","password":"7758521","database":"yhbis"}}}

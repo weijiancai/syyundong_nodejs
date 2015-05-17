@@ -28,3 +28,5 @@ npm install iconv-lite
 npm install multer
 # 日志
 npm install log4js
+# 工具库
+npm install underscore

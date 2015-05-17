@@ -4,6 +4,8 @@ var Tools = {
 
 $(function() {
     var switchTab = new MU.ui.SwitchTab($('ul.page-sidebar-menu'));
+    var isFtpInit = false, isDbInit = false, isTplInit = false;
+
     switchTab.onSelect(function($now, $old, $target){
         $now.append('<span class="selected"></span>');
         $old.parent().removeClass('active').find('a span.selected').remove();
@@ -13,11 +15,20 @@ $(function() {
 
         var targetId = $target.attr('id');
         if(targetId == 'desktop_ftp') {
-            Tools.ftp.init();
+            if(!isFtpInit) {
+                Tools.ftp.init();
+            }
+            isFtpInit = true;
         } else if(targetId == 'desktop_db') {
-            (new Tools.DB()).init();
+            if(!isDbInit) {
+                (new Tools.DB()).init();
+            }
+            isDbInit = true;
         } else if(targetId == 'desktop_tpl') {
-            Tools.tpl.init();
+            if(!isTplInit) {
+                Tools.tpl.init();
+            }
+            isTplInit = true;
         }
     });
 

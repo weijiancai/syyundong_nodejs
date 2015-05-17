@@ -343,13 +343,19 @@
                                   dataType: 'html',
                                   url     : settings.target,
                                   success : function(result, status) {
-                                      if (ajaxoptions.dataType == 'html') {
-                                        $(self).html(result);
-                                      }
                                       self.editing = false;
-                                      callback.apply(self, [result, settings]);
-                                      if (!$.trim($(self).html())) {
-                                          $(self).html(settings.placeholder);
+                                      // add by wei_jc 如果回调函数返回false，则不填空内容
+                                      //var isFill = callback.apply(self, [result, settings]);
+                                      var isFill = callback(result, settings);
+                                      console.log('isFill = ' + isFill);
+                                      if(isFill == undefined || isFill) {
+                                          if (ajaxoptions.dataType == 'html') {
+                                              $(self).html(result);
+                                          }
+
+                                          if (!$.trim($(self).html())) {
+                                              $(self).html(settings.placeholder);
+                                          }
                                       }
                                   },
                                   error   : function(xhr, status, error) {

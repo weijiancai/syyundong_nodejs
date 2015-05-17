@@ -30,9 +30,11 @@ router.post('/dbRetrieve', function(req, res, next) {
     var id = req.body.id || req.query.id;
     var start = req.body.start || 0; // 第几页
     var length = req.body.length || 10; // 每页行数
+    var pkColName = req.body.pk;
 
     var datasource = id.split('.')[0];
-    db.setDataSource(config.getDataSource(datasource));
+    var ds = config.getDataSource(datasource);
+    db.setDataSource(ds);
     var conditions = eval('(' + req.body.conditions + ')');
     var where = '';
     if(conditions && conditions.length > 0) {
@@ -54,10 +56,14 @@ router.post('/dbRetrieve', function(req, res, next) {
             }
         }
     }
-    db.queryByPage('SELECT * FROM ' + id.substr(datasource.length + 1) + where, start, length, function(data) {
+    var tableName = id.substr(datasource.length + 1);
+    if(ds.dbType == 'sqlServer') {
+        tableName = tableName.replace('.', '.dbo.');
+    }
+    db.queryByPage('SELECT * FROM ' + tableName + where, start, length, function(data) {
         data.draw = parseInt(req.body.draw) || 1;
         res.send(data);
-    });
+    }, tableName, pkColName);
 });
 
 router.post('/dbGetDataSource', function(req, res, next) {
@@ -70,6 +76,117 @@ router.post('/dbGetDataSource', function(req, res, next) {
     }
     res.send(array);
 });
+
+router.post('/dbEditTable', function(req, res, next) {
+    var table = req.body.table;
+    var pks = req.body.pks;
+    var pkValues = req.body.pkValues;
+    var value = req.body.value;
+    var column = req.body.column;
+
+    var datasource = table.split('.')[0];
+    db.setDataSource(config.getDataSource(datasource));
+    var sql = "UPDATE " + table.substr(datasource.length + 1) + " SET " + column + "='" + value + "' WHERE ";
+    var pkArray = pks.split(',');
+    var pkValueArray = pkValues.split(',');
+    for(var i = 0; i < pkArray.length; i++) {
+        sql += pkArray[i] + "='" + pkValueArray[i] + "'";
+        if(i < pkArray.length - 1) {
+            sql += ' AND ';
+        }
+    }
+    db.query(sql, function() {
+        res.send(value);
+    });
+});
+
+// 保存数据源
+router.post('/dbSaveDataSource', function(req, res, next) {
+    var name = req.body.name;
+    var dbType = req.body.dbType;
+    var host = req.body.host;
+    var port = req.body.port;
+    var user = req.body.user;
+    var password = req.body.password;
+    var database = req.body.database;
+
+    var ds = config.getDataSource(name);
+    if(ds) {
+        ds.dbType = dbType;
+        ds.host = host;
+        ds.port = port;
+        ds.user = user;
+        ds.password = password;
+        ds.database = database;
+        config.save();
+    } else {
+        config.addDataSource(name, dbType, host, port, user, password, database);
+    }
+
+    res.send();
+});
+// 删除数据源
+router.post('/dbDeleteDataSource', function(req, res, next) {
+    var name = req.body.name;
+
+    var ds = config.getDataSource();
+    if(ds[name]) {
+        delete ds[name];
+        config.save();
+    }
+    res.send();
+});
+// 显示外键详细信息
+router.post('/dbShowFkDetail', function(req, res, next) {
+    var table = req.body.table;
+    var column = req.body.column;
+    var value = req.body.value;
+
+    var strs = table.split('.');
+    var datasource = strs[0];
+    var schema = strs[1];
+    var tableName = strs[2];
+    db.setDataSource(config.getDataSource(datasource));
+    db.getFKConstraintsColumns(schema, function(data) {
+        console.log(data);
+        if(data.length == 1) {
+            var refTable = data[0]['referenced_table_name'];
+            var refColumn = data[0]['referenced_column_name'];
+
+            async.parallel({
+                columns: function(callback) {
+                    db.getDbObjects(datasource + '.' + schema + '.' + refTable, 'columns', function(data) {
+                        callback(null, data);
+                    });
+                },
+                data: function(callback) {
+                    var sql = "SELECT * FROM " + refTable + " WHERE " + refColumn + "='" + value + "'";
+                    db.query(sql, function(data) {
+                        if(data && data.length == 1) {
+                            callback(null, data[0]);
+                        } else {
+                            callback(null, {});
+                        }
+                    });
+                }
+            }, function(err, results) {
+                res.send({columns: results.columns, data: results.data, fkTable: refTable});
+            });
+        }
+    }, {tableName: tableName, columnName: column});
+});
+// 搜索数据库
+router.post('/dbSearch', function(req, res, next) {
+    var value = req.body.value;
+    var type = req.body.type;
+    var id = req.body.id;
+
+    db.search(value, type, id, function(data) {
+        res.send(data);
+    });
+});
+
+
 
 router.get('/getWebPage', function(req, res, next) {
     var url = req.query.url;

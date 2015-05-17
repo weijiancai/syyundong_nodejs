@@ -37,10 +37,13 @@ MU.ui = {
      * @param $container
      * @constructor
      */
-    DataTable: function($container) {
+    DataTable: function($container, $toolbar) {
         var dt, self = this, initComplete, loadDataEnd;
         var selectedRow;
         var isMultiSelect; // 是否允许多选，默认单选
+        var editable; // 是否可编辑，默认否
+        var editUrl; // 可编辑url
+        var editParams; // 可编辑参数
 
         var option = {
             "searching": false,
@@ -55,6 +58,8 @@ MU.ui = {
             "ajax": {url: '', type: 'POST', data: {}},
             //"retrieve": true,
             "destroy": true,
+            "dom": 'Rlfrtip', // 列可拖动
+            stateSave: true, // 保存列拖动后的设置
             "initComplete": function(setting) {
 
             }
@@ -82,7 +87,8 @@ MU.ui = {
             });
 
             // 选中行
-            $container.find('tbody').on( 'click', 'tr', function () {
+            var $body = $container.find('tbody');
+            $body.on( 'click', 'tr', function () {
                 console.log('click tr' + this);
                 if(!isMultiSelect) {
                     $container.find('tbody tr.selected').each(function() {
@@ -102,6 +108,49 @@ MU.ui = {
                     self.setValue(row, 0, true);
                 }
             });
+            // 单元格编辑
+            if(editable) {
+                $body.on('click', 'td', function(e) {
+                    var cell = dt.cell(this);
+                    var index = cell.index();
+                    var orders = dt.colReorder.order();
+                    var curColumn = option.columns[orders[index.column]];
+                    // 不可编辑
+                    if(!curColumn.editable) {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    var pks = [], pkValues = [];
+                    for(var i = 0; i < orders.length; i++) {
+                        var column = option.columns[orders[i]];
+                        if(column.isPk) {
+                            pks.push(column.data);
+                            pkValues.push(self.getValue(index.row, orders[i]));
+                        }
+                    }
+
+
+                    var params = {pks: pks.join(','), pkValues: pkValues.join(','), column: curColumn.data};
+                    var $editable = $(this);
+                    if(curColumn.isFk) {
+                        $editable = $(this).find('a');
+                    }
+                    var settings = {
+                        placeholder: '',
+                        submitdata: $.extend(params, editParams || {}),
+                        callback: function(value, settings) {
+                            cell.data(value);
+                            return false;
+                        }
+                    };
+                    if(curColumn.dataType == 'datetime') {
+                        settings.type = 'datetimepicker';
+                    }
+                    $editable.editable(editUrl, settings);
+                });
+            }
 
             // 回调初始化完成
             if(initComplete) {
@@ -141,6 +190,18 @@ MU.ui = {
             isMultiSelect = flag;
         };
 
+        /**
+         * 是否允许编辑表格，默认不可编辑
+         * @param flag
+         * @param url
+         * @param params
+         */
+        this.setEditable = function(flag, url, params) {
+            editable = flag;
+            editUrl = url;
+            editParams = params;
+        };
+
         this.setColumns = function(columns) {
             columns.unshift({
                 "render": function ( data, type, row ) {
@@ -149,6 +210,7 @@ MU.ui = {
                 },
                 title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
                 orderable: false,
+                editable: false, // 不可编辑
                 //width: 1,
                 className: 'sorting_disabled'
                 //type: 'string'
@@ -167,6 +229,22 @@ MU.ui = {
                 $container.empty();
             }
             dt = $container.DataTable($.extend({}, option));
+            // ====== 安装扩展
+            // 列可拖动
+
+            // 显示、隐藏列
+            if($toolbar) {
+                var options = {
+                    "buttonText": "显示/隐藏列",
+                    exclude: [0],
+                    order: 'alpha',
+                    restore: "Restore",
+                    showAll: "Show all",
+                    showNone: "Show none"
+                };
+                var colvis = new $.fn.dataTable.ColVis(dt, options);
+                $(colvis.button()).appendTo($toolbar);
+            }
         };
 
         this.loadData = function(data) {
@@ -196,6 +274,16 @@ MU.ui = {
          */
         this.setValue = function(row, col, value) {
             dt.cell(row, col).data(value);
+        };
+
+        /**
+         * 获得单元格的值
+         *
+         * @param row
+         * @param col
+         */
+        this.getValue = function(row, col) {
+            return dt.cell(row, col).data();
         };
 
         /**
@@ -277,10 +365,14 @@ MU.ui.DataForm = function($conainer) {
     var queryMode = ['=', '!=', '<', '<=', '>', '>=', '%%', '*%', '%*'];
 
     var self = this;
-    var $form;
+    var $form, validate;
 
     this.submit = function() {
         $form.submit();
+    };
+
+    this.reset = function() {
+        $form[0].reset();
     };
 
     this.genByDataTable = function(dt) {
@@ -289,7 +381,7 @@ MU.ui.DataForm = function($conainer) {
         var fieldList = this.fieldList;
         for(var i = 1; i < columns.length; i++) {
             var column = columns[i];
-            fieldList.push({name: column.data, displayName: column.title, dataType: column.dataType});
+            fieldList.push({name: column.data, displayName: column.title, dataType: column.dataType, isPk: column.isPk, isFk: column.isFk});
         }
 
         return this.gen();
@@ -305,8 +397,20 @@ MU.ui.DataForm = function($conainer) {
         $form.find('[name="' + name + '"]').val(value);
     };
 
+    // 设置字段值
+    this.setValues = function(obj) {
+        for(var key in obj) {
+            if(obj.hasOwnProperty(key)) {
+                this.setValue(key, obj[key]);
+            }
+        }
+    };
+
     // ajax post提交表单
     this.post = function(url, params, callback) {
+        if(validate && !validate.form()) {
+            return;
+        }
         $.post(url, $.extend(this.serialize(), params), callback);
     };
 
@@ -334,7 +438,7 @@ MU.ui.DataForm = function($conainer) {
         var idxRow = 0; // 行号
         var idxCol = 0; // 列号
         var fieldList = this.fieldList;
-        var field, rules = {};
+        var field, rules = {}, messages = {};
         for(var i = 0; i < fieldList.length; i++) {
             field = fieldList[i];
             field.width = field.width || this.colWidth;
@@ -372,9 +476,11 @@ MU.ui.DataForm = function($conainer) {
 
             if(field.required) {
                 rules[field.name] = 'required';
+                messages[field.name] = field.displayName + '不能为空！';
             }
             if(isDataType(MU.C_DT_DATE, field.dataType)) {
                 rules[field.name] = 'date';
+                messages[field.name] = '日期格式不正确！';
             } else if(isDataType(MU.C_DT_INTEGER, field.dataType)) {
                 rules[field.name] = 'number';
             } else if(isDataType(MU.C_DT_NUMBER, field.dataType)) {
@@ -390,7 +496,7 @@ MU.ui.DataForm = function($conainer) {
 
         $form = $('<form></form>').append(formGrid.gen());
         if(this.formType == MU.C_FT_EDIT) {
-            $form.validate({rules: rules});
+            validate = $form.validate({rules: rules, messages: messages});
         }
 
         if($conainer) {
@@ -398,7 +504,26 @@ MU.ui.DataForm = function($conainer) {
         }
         // 日期控件
         $form.find('.dateRange').daterangepicker({
-            format: 'YYYY-MM-DD'
+            format: 'YYYY-MM-DD',
+            locale: {
+                applyLabel: '确定',
+                cancelLabel: '取消',
+                fromLabel: '从',
+                toLabel: '到',
+                weekLabel: '周',
+                customRangeLabel: '自定义',
+                daysOfWeek: ['日', '一', '二', '三', '四', '五', '六'],
+                monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                firstDay: 1
+            },
+            ranges: {
+                '今天': [moment(), moment()],
+                '昨天': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                '最近7天': [moment().subtract(6, 'days'), moment()],
+                '最近30天': [moment().subtract(29, 'days'), moment()],
+                '本月': [moment().startOf('month'), moment().endOf('month')],
+                '上个月': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            }
         }).on('apply.daterangepicker', function(ev, picker) {
             $(this).data('star', picker.startDate.format('YYYY-MM-DD')).data('end', picker.endDate.format('YYYY-MM-DD'));
         });
@@ -520,7 +645,12 @@ MU.ui.DataForm = function($conainer) {
                 $input = $('<textarea></textarea>');
             } else if('select' == type) {
                 $input = $('<select></select>');
-            } else if('text' == type || 'date' == type || 'email' == type || 'ip' == type || 'url' == type || 'int' == type || 'double' == type || 'number' == type) {
+                if(field.list) {
+                    for(var i = 0; i < field.list.length; i++) {
+                        $input.append('<option value="' + field.list[i].data + '">' + field.list[i].label + '</option>')
+                    }
+                }
+            } else if('text' == type || 'date' == type || 'email' == type || 'ip' == type || 'url' == type || 'int' == type || 'double' == type || 'number' == type || 'password' == type) {
                 if('date' == type) {
                     $input.addClass('dateRange');
                     /*if(self.formType == MU.C_FT_QUERY) {
@@ -532,7 +662,7 @@ MU.ui.DataForm = function($conainer) {
                         $('<input class="form-control date" type="text">').attr('id', field.name).attr('name', 'D_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).prependTo($endGroup);
                         return $div;
                     }*/
-                } else if('int' == type || 'double' == type || 'number' == type) {
+                } else if(('int' == type || 'double' == type || 'number' == type) && !field.isPk && !field.isFk) {
                     if(self.formType == MU.C_FT_QUERY) {
                         var $div = $('<div class="flex"></div>');
                         $('<input class="form-control" type="text">').attr('id', field.name).attr('name', 'N_start' + inputName).attr('queryMode', MU.C_QM_GREATER_EQUAL).appendTo($div);
@@ -671,7 +801,7 @@ MU.ui.Dialog = function() {
         '        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>' +
         '        <h4 class="modal-title">' + title + '</h4>' +
         '      </div>' +
-        '      <div class="modal-body">' + $(content).html() + '</div>' +
+        '      <div class="modal-body"></div>' +
         '      <div class="modal-footer">' +
         '        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>' +
         '        <button id="btnOk" type="button" class="btn btn-primary">确定</button>' +
@@ -685,6 +815,9 @@ MU.ui.Dialog = function() {
             // 删除对话框
             $dialog.remove();
         });
+
+        // 添加内容
+        $dialog.find('.modal-body').append(content);
 
         // 确定按钮
         $dialog.find('#btnOk').click(function() {
@@ -708,7 +841,7 @@ MU.ui.DataCrud = function($container) {
     var self = this;
     var appendConditions = [];
 
-    var dt = new MU.ui.DataTable($dataTable);
+    var dt = new MU.ui.DataTable($dataTable, $buttons);
     dt.onInitComplete(function() {
         $buttons.show();
     });
@@ -720,6 +853,11 @@ MU.ui.DataCrud = function($container) {
     var $btnQuery = $('<button type="button" class="btn btn-primary">查询</button>').appendTo($buttons);;
     $btnQuery.click(function() {
         self.query();
+    });
+    // 重置
+    var $btnReset = $('<button type="button" class="btn btn-primary">重置</button>').appendTo($buttons);;
+    $btnReset.click(function() {
+        self.queryForm().reset();
     });
 
     this.dataTable = function() {
@@ -748,5 +886,8 @@ MU.ui.DataCrud = function($container) {
 MU.UString = {
     startsWith: function(str, prefix) {
         return str.substr(0, prefix.length) == prefix;
+    },
+    isEmpty: function(str) {
+        return !(str && $.trim(str).length > 0);
     }
 };

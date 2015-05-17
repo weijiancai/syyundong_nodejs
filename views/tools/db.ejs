@@ -1,5 +1,11 @@
 <div class="col-md-3">
-    <ul id="dbBrowser" class="ztree"></ul>
+    <div class="btn-group">
+        <a id="btnDbAddDataSource" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>
+        <a id="btnDbSearch" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></a>
+    </div>
+    <div style="height: 800px;overflow: scroll">
+        <ul id="dbBrowser" class="ztree"></ul>
+    </div>
 </div>
 <div class="col-md-9">
     <div>
@@ -29,3 +35,8 @@
         </div>
     </div>
 </div>
+
+<ul id="treeMenuDataSource" class="dropdown-menu" style="display: none;">
+    <li class="edit"><a href="#"><span class="glyphicon glyphicon-edit"></span> 编辑</a></li>
+    <li class="delete"><a href="#"><span class="glyphicon glyphicon-trash"></span> 删除</a></li>
+</ul>
