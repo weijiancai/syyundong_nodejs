@@ -121,9 +121,14 @@ Tools.DB = function() {
         $('#btnDbSearch').on('click', function() {
             dialog({
                 //title: '搜索',
-                content: '<input type="text" class="form-control" onkeyup="searchDb(event, this)"><div id="dbSearchResult"></div>',
-                quickClose: true
-            }).width(480).show();
+                content: '<input type="text" class="form-control" onkeyup="searchDb(event, this)"><ul id="dbSearchResult" class="list-group" style="display: none;"></ul>',
+                quickClose: true,
+                padding: 5,
+                onshow: function () {
+                    var $content = this._$('content');
+                    $content.find('input').focus();
+                }
+            }).width(480).focus().show();
         });
     };
 
@@ -235,7 +240,7 @@ function searchDb(event, input) {
 
     $.post('/tools/dbSearch', params, function(data) {
         if(data) {
-            var $result = $('#dbSearchResult');
+            var $result = $('#dbSearchResult').empty().show();
             for(var i = 0; i < data.length; i++) {
                 $result.append(data[i]);
             }

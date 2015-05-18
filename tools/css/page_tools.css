@@ -13,3 +13,35 @@ label {
     color: #888;
     font-size: 11px;
 }
+
+#dbSearchResult {
+    position: absolute;
+    top: 40px;
+    left: -5px;
+    background-clip: padding-box;
+    background-color: #fff;
+    border: 1px solid #999;
+    border-radius: 2px;
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1), 0 0 256px rgba(255, 255, 255, 0.3);
+    width: 600px;
+    padding: 5px;
+}
+#dbSearchResult img {
+    margin-right: 5px;
+}
+#dbSearchResult .highlight {
+    color: #aa5500;
+}
+#dbSearchResult .dbId {
+    color: dimgray;
+    font-size: 10px;
+}
+#dbSearchResult .comment {
+
+}
+#dbSearchResult .dbType {
+    float: right;
+    font-weight: bold;
+}
