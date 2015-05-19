@@ -232,11 +232,14 @@ function searchDb(event, input) {
 
     var treeObj = $.fn.zTree.getZTreeObj("dbBrowser");
     var nodes = treeObj.getSelectedNodes();
-    if(!nodes || nodes.length > 0) {
-        var node = nodes[0];
-        params.type = node.type;
-        params.id = node.id;
+    if(!nodes || nodes.length == 0) {
+        MU.ui.Message.alert('请选择数据源');
+        return;
     }
+
+    var node = nodes[0];
+    params.type = node.type;
+    params.id = node.id;
 
     $.post('/tools/dbSearch', params, function(data) {
         if(data) {

@@ -832,6 +832,12 @@ MU.ui.Dialog = function() {
     }
 };
 
+MU.ui.Message = {
+    alert: function(msg) {
+        dialog({title: '消息', content: msg}).show();
+    }
+};
+
 // 增删改查
 MU.ui.DataCrud = function($container) {
     var $div = $('<div class="dataCrud"></div>').appendTo($container);
