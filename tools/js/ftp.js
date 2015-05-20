@@ -60,8 +60,9 @@ Tools.ftp = {
             });
         });
         ftpTable.showPaginate(false);
-        ftpTable.setUrl('/tools/ftpBrowser');
-        ftpTable.query({path: '/'});
+        ftpTable.setUrl('/tools/ftpBrowser', {path: '/'});
+        ftpTable.applyOption();
+        //ftpTable.query();
 
         // 上一级
         $('#goToParent').click(function() {

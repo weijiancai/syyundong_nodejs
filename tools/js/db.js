@@ -137,7 +137,7 @@ Tools.DB = function() {
         for(var i = 0; i < children.length; i++) {
             var column = children[i];
             var name = column.id.split('.')[3];
-            var obj = {data: name, title: name, dataType: column.dataType, className: column.dataType, isPk: column.isPk, isFk: column.isFk, editable: true};
+            var obj = {data: name, title: name, dataType: column.dataType, className: column.dataType, isPk: column.isPk, isFk: column.isFk, editable: true, displayName: column.displayName, tip: column.name};
             if(obj.isFk) {
                 obj.render = (function(name) {
                     return function(data, type, full, meta) {

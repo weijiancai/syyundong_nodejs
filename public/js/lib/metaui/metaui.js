@@ -68,8 +68,22 @@ MU.ui = {
         $container.on('init.dt', function() {
             console.log('init.dt');
             var $con = $(dt.table().container());
-            $con.find('th').eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
+            var $headers = $con.find('th');
+            $headers.eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
             $con.find("select, input, a.button, button").uniform();
+
+            // header提示
+            $headers.each(function(idx) {
+                var orders = dt.colReorder.order();
+                var curColumn = option.columns[orders[idx]];
+                if(curColumn && curColumn.tip) {
+                    $(this).attr('title', $('<div>' + curColumn.tip + '</div>').text());
+                    /*$(this).on('hover', function() {
+                        console.log(this);
+                        $(this).tooltip('show');
+                    }).data('toggle', 'toggle').tooltip({trigger: 'hover', title: curColumn.tip});*/
+                }
+            });
 
             // 复选框全选
             var $groupCheck = $con.find('.group-checkable');
@@ -381,7 +395,7 @@ MU.ui.DataForm = function($conainer) {
         var fieldList = this.fieldList;
         for(var i = 1; i < columns.length; i++) {
             var column = columns[i];
-            fieldList.push({name: column.data, displayName: column.title, dataType: column.dataType, isPk: column.isPk, isFk: column.isFk});
+            fieldList.push({name: column.data, displayName: column.title, dataType: column.dataType, isPk: column.isPk, isFk: column.isFk, placeholder: column.displayName});
         }
 
         return this.gen();
@@ -668,6 +682,10 @@ MU.ui.DataForm = function($conainer) {
                         $('<input class="form-control" type="text">').attr('id', field.name).attr('name', 'N_start' + inputName).attr('queryMode', MU.C_QM_GREATER_EQUAL).appendTo($div);
                         $div.append('<div style="line-height: 34px;width: 50px;text-align: center">至</div>');
                         $('<input class="form-control" type="text">').attr('id', field.name).attr('name', 'N_end' + inputName).attr('queryMode', MU.C_QM_LESS_THAN).appendTo($div);
+
+                        if(field.placeholder) {
+                            $div.find('input').attr('placeholder', field.placeholder).attr('title', field.placeholder);
+                        }
                         return $div;
                     }
                 }
@@ -679,6 +697,9 @@ MU.ui.DataForm = function($conainer) {
             $input.addClass('form-control').attr('id', field.name).attr('name', inputName);
             if(field.readonly) {
                 $input.attr('readonly', 'readonly');
+            }
+            if(field.placeholder) {
+                $input.attr('placeholder', field.placeholder).attr('title', field.placeholder);
             }
             /*if(field.required) {
                 $input.addClass('required');

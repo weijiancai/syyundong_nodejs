@@ -246,14 +246,14 @@ router.post('/ftpBrowser', function(req, res, next) {
             ftp.destroy();
         });
     }).on('end', function() {
-        res.send(files);
+        res.send({recordsTotal: files.length,recordsFiltered: files.length, data: files});
     }).on('error', function(err) {
         console.log(err);
-        res.send(files);
+        res.send({recordsTotal: files.length,recordsFiltered: files.length, data: files});
     });
     // connect to localhost:21 as anonymous
     ftp.connect({
-        host: '115.29.163.55',
+        host: '192.168.56.1',
         user: 'wei_jc',
         password: 'wjcectongs2013#'
     });
