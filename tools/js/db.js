@@ -1,16 +1,12 @@
 Tools.DB = function() {
     var self = this;
 
-    var crud = new MU.ui.DataCrud($('#tab_dbTables'));
-
-    // 查询表单
-    var queryForm;
-
     var dataSourceForm = new MU.ui.DataForm();
     dataSourceForm.colCount = 1;
     dataSourceForm.fieldList = [
         {name: 'name', displayName: '名称：', required: true},
         {name: 'dbType', displayName: '数据库类型：', required: true, displayStyle: MU.C_DS_COMBO_BOX, list: [{data: 'mysql', label: 'MySql'}, {data: 'sqlServer', label: 'SqlServer'}]},
+        {name: 'isVpn', displayName: '是否VPN：', required: false, displayStyle: MU.C_DS_COMBO_BOX, list: [{data: 'F', label: '否'}, {data: 'T', label: '是'}]},
         {name: 'host', displayName: '主机：', required: true},
         {name: 'port', displayName: '端口：', required: true},
         {name: 'user', displayName: '用户名：', required: true},
@@ -119,14 +115,49 @@ Tools.DB = function() {
 
         // 搜索数据库
         $('#btnDbSearch').on('click', function() {
+            var filterDiv = '<div class="dbSearchFilter" style="display: none;"><ul>' +
+                '<li><label><input type="checkbox" name="types" value="TABLE">表</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="VIEW">视图</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="COLUMN">列</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="CONSTRAINT">约束</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="INDEX">索引</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="TRIGGER">触发器</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="PROCEDURE">存储过程</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="FUNCTION">函数</label></li>' +
+                '</ul>' +
+                '<div><button id="filterSelectAll" type="button" class="btn btn-primary btn-sm">全选</button> <button id="filterUnSelectAll" type="button" class="btn btn-primary btn-sm">全不选</button></div>' +
+                '</div>';
             dialog({
                 //title: '搜索',
-                content: '<input type="text" class="form-control" onkeyup="searchDb(event, this)"><ul id="dbSearchResult" class="list-group" style="display: none;"></ul>',
+                content: '<div class="flex search_input"><input type="text" class="form-control" placeholder="表/视图/列/约束/索引/触发器/函数"><span id="dbFilterTag" class="glyphicon glyphicon-filter"></span></div><ul id="dbSearchResult" class="list-group" style="display: none;"></ul>' + filterDiv,
                 quickClose: true,
                 padding: 5,
                 onshow: function () {
                     var $content = this._$('content');
-                    $content.find('input').focus();
+                    var $filterDiv = $content.find('.dbSearchFilter');
+                    // 过滤
+                    $content.find('#dbFilterTag').click(function() {
+                        $filterDiv.toggle();
+                    });
+                    // 全选
+                    $content.find('#filterSelectAll').click(function() {
+                        $filterDiv.find('input').each(function() {
+                            this['checked'] = true;
+                        });
+                    });
+                    // 全不选
+                    $content.find('#filterUnSelectAll').click(function() {
+                        $filterDiv.find('input').removeAttr('checked');
+                    });
+                    // 搜索框
+                    $content.find('input').focus().keyup(function(event) {
+                        var types = [];
+                        $filterDiv.find('input:checked').each(function() {
+                            types.push($(this).val());
+                        });
+                        searchDb(event, this, types.join(','));
+                    });
+
                 }
             }).width(480).focus().show();
         });
@@ -145,6 +176,10 @@ Tools.DB = function() {
                     }
                 })(name);
                 obj.editable = false; // 外键不可编辑
+            } else {
+                obj.render = function(data) {
+                    return '<div>' + data + '</div>';
+                }
             }
             if(obj.isPk) {
                 pk = obj.data;
@@ -152,16 +187,28 @@ Tools.DB = function() {
             columns.push(obj);
         }
 
+        var tableName = id.split('.')[2];
+        var $tabs = $('#db_tablesPanel');
+        var $ul = $tabs.find('ul');
+        $ul.find('li').removeClass('active');
+        $ul.append('<li class="active"><a href="#table_' + tableName + '" data-toggle="tab">' + tableName + '</a></li>');
+
+        var $panel = $tabs.find('div.tab-content');
+        $panel.find('> div').removeClass('active');
+        var $newPanel = $('<div class="tab-pane active" id="table_' + tableName + '"></div>');
+        $newPanel.append();
+        $panel.append($newPanel);
+
+        var crud = new MU.ui.DataCrud($newPanel);
         var dt = crud.dataTable();
         dt.setHeight(600);
         dt.setColumns(columns);
         dt.setUrl('/tools/dbRetrieve?id=' + id + '&pk=' + (pk ? pk : ''));
         dt.setEditable(true, '/tools/dbEditTable', {table: id});
         dt.applyOption();
-        //crud.query({id: id});
 
         // 初始化表单
-        queryForm = crud.queryForm();
+        var queryForm = crud.queryForm();
         queryForm.genByDataTable(dt);
     };
 
@@ -220,7 +267,8 @@ function showFkDetail(table, column, value) {
 }
 
 // 搜索数据库
-function searchDb(event, input) {
+function searchDb(event, input, types) {
+    console.log(types);
     if(event.keyCode != 13) {
         return;
     }
@@ -240,6 +288,7 @@ function searchDb(event, input) {
     var node = nodes[0];
     params.type = node.type;
     params.id = node.id;
+    params.filter = types;
 
     $.post('/tools/dbSearch', params, function(data) {
         if(data) {

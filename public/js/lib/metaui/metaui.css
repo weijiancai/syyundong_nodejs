@@ -79,10 +79,13 @@ input.text-error, textarea.text-error, select.text-error {
     color: #b94a48;
 }
 
-.dataTable td {
+.dataTable td > div {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    word-wrap: normal;
+    height: 20px;
+    line-height: 20px;
 }
 .dataTable td > a {
     display: block;

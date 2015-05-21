@@ -109,6 +109,7 @@ router.post('/dbSaveDataSource', function(req, res, next) {
     var user = req.body.user;
     var password = req.body.password;
     var database = req.body.database;
+    var isVpn = req.body.isVpn;
 
     var ds = config.getDataSource(name);
     if(ds) {
@@ -118,9 +119,10 @@ router.post('/dbSaveDataSource', function(req, res, next) {
         ds.user = user;
         ds.password = password;
         ds.database = database;
+        ds.isVpn = isVpn;
         config.save();
     } else {
-        config.addDataSource(name, dbType, host, port, user, password, database);
+        config.addDataSource(name, dbType, host, port, user, password, database, isVpn);
     }
 
     res.send();
@@ -180,8 +182,9 @@ router.post('/dbSearch', function(req, res, next) {
     var value = req.body.value;
     var type = req.body.type;
     var id = req.body.id;
+    var filter = req.body.filter;
 
-    db.search(value, type, id, function(data) {
+    db.search(value, type, id, filter, function(data) {
         res.send(data);
     });
 });
