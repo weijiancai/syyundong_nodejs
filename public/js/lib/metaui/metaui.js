@@ -1,335 +1,345 @@
 var MU = {};
 
-MU.ui = {
-    SwitchTab: function($container) {
-        var onSelectCallback;
+MU.ui = {};
 
-        var $a = $container.find('a');
-        var $current = $a.eq(0);
+MU.ui.SwitchTab = function($container) {
+    var onSelectCallback;
 
-        $a.click(function() {
-            console.log($current);
-            var $this = $(this);
-            // 隐藏
-            $('#' + $current.data('target')).hide();
-            // 显示
-            var $target = $('#' + $this.data('target')).show();
-            if(onSelectCallback) {
-                onSelectCallback($this, $current, $target);
-            } else {
-                $target.addClass('active');
-            }
+    var $a = $container.find('a');
+    var $current = $a.eq(0);
 
-            $current = $this;
-        });
-
-        /**
-         * 选中回调
-         * @param callback
-         */
-        this.onSelect = function(callback) {
-            onSelectCallback = callback;
+    $a.click(function() {
+        console.log($current);
+        var $this = $(this);
+        // 隐藏
+        $('#' + $current.data('target')).hide();
+        // 显示
+        var $target = $('#' + $this.data('target')).show();
+        if(onSelectCallback) {
+            onSelectCallback($this, $current, $target);
+        } else {
+            $target.addClass('active');
         }
-    },
+
+        $current = $this;
+    });
+
     /**
-     * 数据表格
-     *
-     * @param $container
-     * @constructor
+     * 选中回调
+     * @param callback
      */
-    DataTable: function($container, $toolbar) {
-        var dt, self = this, initComplete, loadDataEnd;
-        var selectedRow;
-        var isMultiSelect; // 是否允许多选，默认单选
-        var editable; // 是否可编辑，默认否
-        var editUrl; // 可编辑url
-        var editParams; // 可编辑参数
-
-        var option = {
-            "searching": false,
-            "lengthChange": false,
-            "processing": true,
-            "serverSide": false, // 服务器端排序
-            "paginate": true, // 分页
-            "info": false,
-            //"paginationType": "bootstrap",
-            //"scrollX": true,
-            "columns": [],
-            "ajax": {url: '', type: 'POST', data: {}},
-            //"retrieve": true,
-            "destroy": true,
-            "dom": 'Rlfrtip', // 列可拖动
-            stateSave: true, // 保存列拖动后的设置
-            "initComplete": function(setting) {
-
-            }
-        };
-
-        $container.on('init.dt', function() {
-            console.log('init.dt');
-            var $con = $(dt.table().container());
-            var $headers = $con.find('th');
-            $headers.eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
-            $con.find("select, input, a.button, button").uniform();
-
-            // header提示
-            $headers.each(function(idx) {
-                var orders = dt.colReorder.order();
-                var curColumn = option.columns[orders[idx]];
-                if(curColumn && curColumn.tip) {
-                    $(this).attr('title', $('<div>' + curColumn.tip + '</div>').text());
-                    /*$(this).on('hover', function() {
-                        console.log(this);
-                        $(this).tooltip('show');
-                    }).data('toggle', 'toggle').tooltip({trigger: 'hover', title: curColumn.tip});*/
-                }
-            });
-
-            // 复选框全选
-            var $groupCheck = $con.find('.group-checkable');
-            $groupCheck.change(function () {
-                var set = $(this).attr("data-set");
-                var checked = $(this).is(":checked");
-                $container.find(set).each(function () {
-                    if (checked) {
-                        $(this).attr("checked", "checked");
-                    } else {
-                        $(this).removeAttr('checked');
-                    }
-                });
-                $.uniform.update(set);
-            });
-
-            // 选中行
-            var $body = $container.find('tbody');
-            $body.on( 'click', 'tr', function () {
-                console.log('click tr' + this);
-                if(!isMultiSelect) {
-                    $container.find('tbody tr.selected').each(function() {
-                        $(this).removeClass('selected');
-                        var row = dt.row(this).index();
-                        self.setValue(row, 0, false);
-                    });
-                }
-                // 获得行号
-                var row = dt.row(this).index();
-                if ($(this).hasClass('selected')) {
-                    $(this).removeClass('selected');
-                    self.setValue(row, 0, false);
-                } else {
-                    //dt.$('tr.selected').removeClass('selected');
-                    $(this).addClass('selected');
-                    self.setValue(row, 0, true);
-                }
-            });
-            // 单元格编辑
-            if(editable) {
-                $body.on('click', 'td', function(e) {
-                    var cell = dt.cell(this);
-                    var index = cell.index();
-                    var orders = dt.colReorder.order();
-                    var curColumn = option.columns[orders[index.column]];
-                    // 不可编辑
-                    if(!curColumn.editable) {
-                        return;
-                    }
-
-                    e.preventDefault();
-
-                    var pks = [], pkValues = [];
-                    for(var i = 0; i < orders.length; i++) {
-                        var column = option.columns[orders[i]];
-                        if(column.isPk) {
-                            pks.push(column.data);
-                            pkValues.push(self.getValue(index.row, orders[i]));
-                        }
-                    }
-
-
-                    var params = {pks: pks.join(','), pkValues: pkValues.join(','), column: curColumn.data};
-                    var $editable = $(this);
-                    if(curColumn.isFk) {
-                        $editable = $(this).find('a');
-                    }
-                    var settings = {
-                        placeholder: '',
-                        submitdata: $.extend(params, editParams || {}),
-                        callback: function(value, settings) {
-                            cell.data(value);
-                            return false;
-                        }
-                    };
-                    if(curColumn.dataType == 'datetime') {
-                        settings.type = 'datetimepicker';
-                    }
-                    $editable.editable(editUrl, settings);
-                });
-            }
-
-            // 回调初始化完成
-            if(initComplete) {
-                initComplete();
-            }
-            console.log('init end');
-        }).on('preXhr.dt', function (e, settings, data ) {
-            $.extend(data, option.ajax.data);
-        } );
-
-        this.showPaginate = function(isShow) {
-            option.paginate = isShow;
-        };
-
-        this.showInfo = function(isShow) {
-            option.info = isShow;
-        };
-
-        this.showSearching = function(isShow) {
-            option.searching = isShow;
-        };
-
-        this.setUrl = function(url, params) {
-            option.ajax.url = url;
-            option.ajax.data = params;
-        };
-
-        this.setHeight = function(height) {
-            option.scrollY = height;
-        };
-
-        /**
-         * 是否允许多选，默认单选
-         * @param flag
-         */
-        this.setMultiSelect = function(flag) {
-            isMultiSelect = flag;
-        };
-
-        /**
-         * 是否允许编辑表格，默认不可编辑
-         * @param flag
-         * @param url
-         * @param params
-         */
-        this.setEditable = function(flag, url, params) {
-            editable = flag;
-            editUrl = url;
-            editParams = params;
-        };
-
-        this.setColumns = function(columns) {
-            columns.unshift({
-                "render": function ( data, type, row ) {
-                    var check = data ? 'checked="checked"' : '';
-                    return '<input type="checkbox" class="checkboxes" ' + check + '/>';
-                },
-                title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
-                orderable: false,
-                editable: false, // 不可编辑
-                //width: 1,
-                className: 'sorting_disabled'
-                //type: 'string'
-                //orderSequence: []
-            });
-            option.columns = columns;
-            if(columns.length > 0) {
-                option.scrollX = true;
-            }
-        };
-
-        this.applyOption = function() {
-            if(dt) {
-                dt.destroy();
-                // 清空列
-                $container.empty();
-            }
-            dt = $container.DataTable($.extend({}, option));
-            // ====== 安装扩展
-            // 列可拖动
-
-            // 显示、隐藏列
-            if($toolbar) {
-                var options = {
-                    "buttonText": "显示/隐藏列",
-                    exclude: [0],
-                    order: 'alpha',
-                    restore: "Restore",
-                    showAll: "Show all",
-                    showNone: "Show none"
-                };
-                var colvis = new $.fn.dataTable.ColVis(dt, options);
-                $(colvis.button()).appendTo($toolbar);
-            }
-        };
-
-        this.loadData = function(data) {
-            dt.clear();
-            dt.rows.add(data.data ? data.data : data).draw();
-            // 加载数据完成后回调
-            if(loadDataEnd) {
-                loadDataEnd(data);
-            }
-        };
-
-        this.query = function(params) {
-            option.ajax.data = params;
-            dt.ajax.reload();
-        };
-
-        this.getOption = function() {
-            return option;
-        };
-
-        /**
-         * 设置单元格的值
-         *
-         * @param row 行
-         * @param col 列
-         * @param value 值
-         */
-        this.setValue = function(row, col, value) {
-            dt.cell(row, col).data(value);
-        };
-
-        /**
-         * 获得单元格的值
-         *
-         * @param row
-         * @param col
-         */
-        this.getValue = function(row, col) {
-            return dt.cell(row, col).data();
-        };
-
-        /**
-         * 获得选中行数据
-         *
-         * @returns {Object}
-         */
-        this.getSelectedRow = function() {
-            var selectedRows = [];
-            $(dt.table().body()).find('tr.selected').each(function() {
-                selectedRows.push(dt.row(this).data());
-            });
-            return selectedRows;
-        };
-
-        /**
-         * 获得DataTables API
-         * @returns {*}
-         */
-        this.getApi = function() {
-            return dt;
-        };
-
-        this.onInitComplete = function(callback) {
-            initComplete = callback;
-        };
-
-        this.onLoadDataEnd = function(callback) {
-            loadDataEnd = callback;
-        }
+    this.onSelect = function(callback) {
+        onSelectCallback = callback;
     }
 };
+
+/**
+ * 数据表格
+ *
+ * @param $container
+ * @param $toolbar
+ * @constructor
+ */
+MU.ui.DataTable = function($container, $toolbar) {
+    var dt, self = this, initComplete, loadDataEnd;
+    var selectedRow;
+    var isMultiSelect; // 是否允许多选，默认单选
+    var editable; // 是否可编辑，默认否
+    var editUrl; // 可编辑url
+    var editParams; // 可编辑参数
+    var deleteUrl; // 删除行url
+    var deleteParams; // 删除行参数
+
+    var option = {
+        "searching": false,
+        "lengthChange": false,
+        "processing": true,
+        "serverSide": false, // 服务器端排序
+        "paginate": true, // 分页
+        "info": false,
+        //"paginationType": "bootstrap",
+        //"scrollX": true,
+        "columns": [],
+        "ajax": {url: '', type: 'POST', data: {}},
+        //"retrieve": true,
+        "destroy": true,
+        "dom": 'Rlfrtip', // 列可拖动
+        stateSave: true, // 保存列拖动后的设置
+        "initComplete": function(setting) {
+
+        }
+    };
+
+    $container.on('init.dt', function() {
+        console.log('init.dt');
+        var $con = $(dt.table().container());
+        var $headers = $con.find('th');
+        $headers.eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
+        $con.find("select, input, a.button, button").uniform();
+
+        // header提示
+        $headers.each(function(idx) {
+            var orders = dt.colReorder.order();
+            var curColumn = option.columns[orders[idx]];
+            if(curColumn && curColumn.tip) {
+                $(this).attr('title', $('<div>' + curColumn.tip + '</div>').text());
+                /*$(this).on('hover', function() {
+                    console.log(this);
+                    $(this).tooltip('show');
+                }).data('toggle', 'toggle').tooltip({trigger: 'hover', title: curColumn.tip});*/
+            }
+        });
+
+        // 复选框全选
+        var $groupCheck = $con.find('.group-checkable');
+        $groupCheck.change(function () {
+            var set = $(this).attr("data-set");
+            var checked = $(this).is(":checked");
+            $container.find(set).each(function () {
+                if (checked) {
+                    $(this).attr("checked", "checked");
+                } else {
+                    $(this).removeAttr('checked');
+                }
+            });
+            $.uniform.update(set);
+        });
+
+        // 选中行
+        var $body = $container.find('tbody');
+        $body.on( 'click', 'tr', function () {
+            console.log('click tr' + this);
+            if(!isMultiSelect) {
+                $container.find('tbody tr.selected').each(function() {
+                    $(this).removeClass('selected');
+                    var row = dt.row(this).index();
+                    self.setValue(row, 0, false);
+                });
+            }
+            // 获得行号
+            var row = dt.row(this).index();
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+                self.setValue(row, 0, false);
+            } else {
+                //dt.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                self.setValue(row, 0, true);
+            }
+        });
+        // 单元格编辑
+        if(editable) {
+            $body.on('click', 'td', function(e) {
+                var cell = dt.cell(this);
+                var index = cell.index();
+                var orders = dt.colReorder.order();
+                var curColumn = option.columns[orders[index.column]];
+                // 不可编辑
+                if(!curColumn.editable) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                var pks = [], pkValues = [];
+                for(var i = 0; i < orders.length; i++) {
+                    var column = option.columns[orders[i]];
+                    if(column.isPk) {
+                        pks.push(column.data);
+                        pkValues.push(self.getValue(index.row, orders[i]));
+                    }
+                }
+
+
+                var params = {pks: pks.join(','), pkValues: pkValues.join(','), column: curColumn.data};
+                var $editable = $(this);
+                if(curColumn.isFk) {
+                    $editable = $(this).find('a');
+                }
+                var settings = {
+                    placeholder: '',
+                    submitdata: $.extend(params, editParams || {}),
+                    callback: function(value, settings) {
+                        cell.data(value);
+                        return false;
+                    }
+                };
+                if(curColumn.dataType == 'datetime') {
+                    settings.type = 'datetimepicker';
+                }
+                $editable.editable(editUrl, settings);
+            });
+        }
+
+        // 回调初始化完成
+        if(initComplete) {
+            initComplete();
+        }
+        console.log('init end');
+    }).on('preXhr.dt', function (e, settings, data ) {
+        $.extend(data, option.ajax.data);
+    } );
+
+    this.showPaginate = function(isShow) {
+        option.paginate = isShow;
+    };
+
+    this.showInfo = function(isShow) {
+        option.info = isShow;
+    };
+
+    this.showSearching = function(isShow) {
+        option.searching = isShow;
+    };
+
+    this.setUrl = function(url, params) {
+        option.ajax.url = url;
+        option.ajax.data = params;
+    };
+
+    this.setDeleteUrl = function(url, params) {
+        deleteUrl = url;
+        deleteParams = params;
+    };
+
+    this.setHeight = function(height) {
+        option.scrollY = height;
+    };
+
+    /**
+     * 是否允许多选，默认单选
+     * @param flag
+     */
+    this.setMultiSelect = function(flag) {
+        isMultiSelect = flag;
+    };
+
+    /**
+     * 是否允许编辑表格，默认不可编辑
+     * @param flag
+     * @param url
+     * @param params
+     */
+    this.setEditable = function(flag, url, params) {
+        editable = flag;
+        editUrl = url;
+        editParams = params;
+    };
+
+    this.setColumns = function(columns) {
+        columns.unshift({
+            "render": function ( data, type, row ) {
+                var check = data ? 'checked="checked"' : '';
+                return '<input type="checkbox" class="checkboxes" ' + check + '/>';
+            },
+            title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
+            orderable: false,
+            editable: false, // 不可编辑
+            //width: 1,
+            className: 'sorting_disabled'
+            //type: 'string'
+            //orderSequence: []
+        });
+        option.columns = columns;
+        if(columns.length > 0) {
+            option.scrollX = true;
+        }
+    };
+
+    this.applyOption = function() {
+        if(dt) {
+            dt.destroy();
+            // 清空列
+            $container.empty();
+        }
+        dt = $container.DataTable($.extend({}, option));
+        // ====== 安装扩展
+        // 列可拖动
+
+        // 显示、隐藏列
+        if($toolbar) {
+            var options = {
+                "buttonText": "显示/隐藏列",
+                exclude: [0],
+                order: 'alpha',
+                restore: "Restore",
+                showAll: "Show all",
+                showNone: "Show none"
+            };
+            var colvis = new $.fn.dataTable.ColVis(dt, options);
+            $(colvis.button()).appendTo($toolbar);
+        }
+    };
+
+    this.loadData = function(data) {
+        dt.clear();
+        dt.rows.add(data.data ? data.data : data).draw();
+        // 加载数据完成后回调
+        if(loadDataEnd) {
+            loadDataEnd(data);
+        }
+    };
+
+    this.query = function(params) {
+        option.ajax.data = params;
+        dt.ajax.reload();
+    };
+
+    this.getOption = function() {
+        return option;
+    };
+
+    /**
+     * 设置单元格的值
+     *
+     * @param row 行
+     * @param col 列
+     * @param value 值
+     */
+    this.setValue = function(row, col, value) {
+        dt.cell(row, col).data(value);
+    };
+
+    /**
+     * 获得单元格的值
+     *
+     * @param row
+     * @param col
+     */
+    this.getValue = function(row, col) {
+        return dt.cell(row, col).data();
+    };
+
+    /**
+     * 获得选中行数据
+     *
+     * @returns {Object}
+     */
+    this.getSelectedRow = function() {
+        var selectedRows = [];
+        $(dt.table().body()).find('tr.selected').each(function() {
+            selectedRows.push(dt.row(this).data());
+        });
+        return selectedRows;
+    };
+
+    /**
+     * 获得DataTables API
+     * @returns {*}
+     */
+    this.getApi = function() {
+        return dt;
+    };
+
+    this.onInitComplete = function(callback) {
+        initComplete = callback;
+    };
+
+    this.onLoadDataEnd = function(callback) {
+        loadDataEnd = callback;
+    }
+};
+
 /* 常量 */
 // 表单类型
 MU.C_FT_EDIT = 0;
@@ -877,14 +887,24 @@ MU.ui.DataCrud = function($container) {
     queryForm.formType = MU.C_FT_QUERY;
 
     // 查询
-    var $btnQuery = $('<button type="button" class="btn btn-primary">查询</button>').appendTo($buttons);;
+    var $btnQuery = $('<button type="button" class="btn btn-primary">查询</button>').appendTo($buttons);
     $btnQuery.click(function() {
         self.query();
     });
     // 重置
-    var $btnReset = $('<button type="button" class="btn btn-primary">重置</button>').appendTo($buttons);;
+    var $btnReset = $('<button type="button" class="btn btn-primary">重置</button>').appendTo($buttons);
     $btnReset.click(function() {
         self.queryForm().reset();
+    });
+    // 删除
+    var $btnDelete = $('<button type="button" class="btn btn-primary">删除</button>').appendTo($buttons);
+    $btnDelete.click(function() {
+        var selections = dt.getSelectedRow();
+        if(selections.length == 0) {
+            MU.ui.Message.alert('请选择行！');
+            return;
+        }
+
     });
 
     this.dataTable = function() {

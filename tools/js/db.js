@@ -40,9 +40,7 @@ Tools.DB = function() {
                         if(children) {
                             self.initTable(treeNode.id, children);
                         } else {
-                            $.post('/tools/dbBrowser', {id: treeNode.id, type: 'columns'}, function(children) {
-                                self.initTable(treeNode.id, children);
-                            });
+                            self.genTable(treeNode.id);
                         }
                     }
                 },
@@ -116,18 +114,18 @@ Tools.DB = function() {
         // 搜索数据库
         $('#btnDbSearch').on('click', function() {
             var filterDiv = '<div class="dbSearchFilter" style="display: none;"><ul>' +
-                '<li><label><input type="checkbox" name="types" value="TABLE">表</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="VIEW">视图</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="COLUMN">列</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="CONSTRAINT">约束</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="INDEX">索引</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="TRIGGER">触发器</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="PROCEDURE">存储过程</label></li>' +
-                '<li><label><input type="checkbox" name="types" value="FUNCTION">函数</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="TABLE" checked>表</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="VIEW" checked>视图</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="COLUMN" checked>列</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="CONSTRAINT" checked>约束</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="INDEX" checked>索引</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="TRIGGER" checked>触发器</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="PROCEDURE" checked>存储过程</label></li>' +
+                '<li><label><input type="checkbox" name="types" value="FUNCTION" checked>函数</label></li>' +
                 '</ul>' +
                 '<div><button id="filterSelectAll" type="button" class="btn btn-primary btn-sm">全选</button> <button id="filterUnSelectAll" type="button" class="btn btn-primary btn-sm">全不选</button></div>' +
                 '</div>';
-            dialog({
+            var da = dialog({
                 //title: '搜索',
                 content: '<div class="flex search_input"><input type="text" class="form-control" placeholder="表/视图/列/约束/索引/触发器/函数"><span id="dbFilterTag" class="glyphicon glyphicon-filter"></span></div><ul id="dbSearchResult" class="list-group" style="display: none;"></ul>' + filterDiv,
                 quickClose: true,
@@ -151,15 +149,23 @@ Tools.DB = function() {
                     });
                     // 搜索框
                     $content.find('input').focus().keyup(function(event) {
+                        $filterDiv.hide();
+
                         var types = [];
                         $filterDiv.find('input:checked').each(function() {
                             types.push($(this).val());
                         });
-                        searchDb(event, this, types.join(','));
+                        searchDb(event, this, types.join(','), self, da);
                     });
 
                 }
             }).width(480).focus().show();
+        });
+    };
+
+    this.genTable = function(id) {
+        $.post('/tools/dbBrowser', {id: id, type: 'columns'}, function(children) {
+            self.initTable(id, children);
         });
     };
 
@@ -172,18 +178,19 @@ Tools.DB = function() {
             if(obj.isFk) {
                 obj.render = (function(name) {
                     return function(data, type, full, meta) {
-                        return '<a href="#" onclick="showFkDetail(\''+ id +'\', \'' + name + '\', \'' + data + '\')">' +data + '</a>';
+                        return '<a href="#" onclick="showFkDetail(\''+ id +'\', \'' + name + '\', \'' + data + '\')">' + data + '</a>';
                     }
                 })(name);
                 obj.editable = false; // 外键不可编辑
             } else {
                 obj.render = function(data) {
-                    return '<div>' + data + '</div>';
+                    return '<div>' + (data ? data : '') + '</div>';
                 }
             }
             if(obj.isPk) {
                 pk = obj.data;
             }
+            obj.defaultContent = '';
             columns.push(obj);
         }
 
@@ -267,7 +274,7 @@ function showFkDetail(table, column, value) {
 }
 
 // 搜索数据库
-function searchDb(event, input, types) {
+function searchDb(event, input, types, db, dialog) {
     console.log(types);
     if(event.keyCode != 13) {
         return;
@@ -292,10 +299,18 @@ function searchDb(event, input, types) {
 
     $.post('/tools/dbSearch', params, function(data) {
         if(data) {
-            var $result = $('#dbSearchResult').empty().show();
+            var $result = $(input).parent().parent().find('#dbSearchResult').empty().show();
             for(var i = 0; i < data.length; i++) {
                 $result.append(data[i]);
             }
+            $result.find('li').click(function() {
+                var id = $(this).data('id');
+                var type = $(this).data('type');
+                if(type == 'TABLE' || type == 'VIEW') {
+                    db.genTable(id);
+                    dialog.close();
+                }
+            })
         }
     });
 }
