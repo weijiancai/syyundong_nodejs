@@ -9,6 +9,7 @@ var fs = require('fs');
 var path = require('path');
 var Ftp = require('ftp');
 var iconv = require('iconv-lite');
+var sqlBuilder = require('../lib/sqlBuilder');
 var router = express.Router();
 
 //db.setDataSource(config.getDataSource('sh'));
@@ -31,11 +32,12 @@ router.post('/dbRetrieve', function(req, res, next) {
     var start = req.body.start || 0; // 第几页
     var length = req.body.length || 10; // 每页行数
     var pkColName = req.body.pk;
+    var conditions = req.body.conditions;
 
     var datasource = id.split('.')[0];
     var ds = config.getDataSource(datasource);
     db.setDataSource(ds);
-    var conditions = eval('(' + req.body.conditions + ')');
+    /*var conditions = eval('(' + req.body.conditions + ')');
     var where = '';
     if(conditions && conditions.length > 0) {
         where = ' where ';
@@ -55,12 +57,13 @@ router.post('/dbRetrieve', function(req, res, next) {
                 where += ' and ';
             }
         }
-    }
+    }*/
     var tableName = id.substr(datasource.length + 1);
     if(ds.dbType == 'sqlServer') {
         tableName = tableName.replace('.', '.dbo.');
     }
-    db.queryByPage('SELECT * FROM ' + tableName + where, start, length, function(data) {
+    var sql = sqlBuilder.create().query().from(tableName).addConditions(conditions).build();
+    db.queryByPage(sql, start, length, function(data) {
         data.draw = parseInt(req.body.draw) || 1;
         res.send(data);
     }, tableName, pkColName);
@@ -97,6 +100,24 @@ router.post('/dbEditTable', function(req, res, next) {
     }
     db.query(sql, function() {
         res.send(value);
+    });
+});
+
+// 删除表数据
+router.post('/dbDeleteTableRow', function(req, res, next) {
+    var table = req.body.table;
+    var conditions = req.body.conditions;
+
+    var datasource = table.split('.')[0];
+    var ds = config.getDataSource(datasource);
+    db.setDataSource(ds);
+    var tableName = table.substr(datasource.length + 1);
+    if(ds.dbType == 'sqlServer') {
+        tableName = tableName.replace('.', '.dbo.');
+    }
+    var sql = sqlBuilder.create().del().from(tableName).addConditions(conditions).build();
+    db.query(sql, function() {
+        res.send();
     });
 });
 

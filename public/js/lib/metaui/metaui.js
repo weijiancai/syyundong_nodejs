@@ -152,9 +152,9 @@ MU.ui.DataTable = function($container, $toolbar) {
 
 
                 var params = {pks: pks.join(','), pkValues: pkValues.join(','), column: curColumn.data};
-                var $editable = $(this);
+                var $editable = $(this).find('> div');
                 if(curColumn.isFk) {
-                    $editable = $(this).find('a');
+                    $editable = $(this).find('> a');
                 }
                 var settings = {
                     placeholder: '',
@@ -285,6 +285,31 @@ MU.ui.DataTable = function($container, $toolbar) {
         dt.ajax.reload();
     };
 
+    this.delete = function(params) {
+        var selections = this.getSelectedRow();
+        if(selections.length == 0) {
+            MU.ui.Message.alert('请选择行！');
+            return;
+        }
+        params = params || {};
+        var pkCols = this.getPkColOptions();
+        if(pkCols.length > 0) {
+            var conditions = new MU.QueryCondition();
+            for(var i = 0; i < pkCols.length; i++) {
+                var col = pkCols[i];
+                conditions.add(col.data, selections[0][col.data]);
+            }
+            params.conditions = conditions.toString();
+            // 发送请求
+            $.post(deleteUrl, $.extend(deleteParams, params), function() {
+                // 重新检索
+                dt.ajax.reload();
+            });
+        } else {
+            MU.Message.alert('没有主键列！');
+        }
+    };
+
     this.getOption = function() {
         return option;
     };
@@ -321,6 +346,21 @@ MU.ui.DataTable = function($container, $toolbar) {
             selectedRows.push(dt.row(this).data());
         });
         return selectedRows;
+    };
+
+    /**
+     * 获得主键列信息
+     *
+     * @return Array
+     */
+    this.getPkColOptions = function() {
+        var columns = [];
+        for(var i = 0; i < option.columns.length; i++) {
+            if(option.columns[i].isPk) {
+                columns.push(option.columns[i]);
+            }
+        }
+        return columns;
     };
 
     /**
@@ -769,8 +809,8 @@ MU.ui.DataForm = function($conainer) {
                         name = name.substr(5);
                         mode = '2';
                     } else if($this.hasClass('dateRange')) { // 日期范围
-                        array.push({name: name, value: $this.data('star'), mode: '>='});
-                        array.push({name: name, value: $this.data('end'), mode: '<'});
+                        array.push({name: name, value: $this.data('star') + ' 00:00:00', mode: '>='});
+                        array.push({name: name, value: $this.data('end') + ' 23:59:59', mode: '<'});
                         return;
                     }
                     array.push({name: name, value: value, mode: queryMode[parseInt(mode)]});
@@ -899,13 +939,10 @@ MU.ui.DataCrud = function($container) {
     // 删除
     var $btnDelete = $('<button type="button" class="btn btn-primary">删除</button>').appendTo($buttons);
     $btnDelete.click(function() {
-        var selections = dt.getSelectedRow();
-        if(selections.length == 0) {
-            MU.ui.Message.alert('请选择行！');
-            return;
-        }
-
+        dt.delete();
     });
+    // 数据跟踪
+
 
     this.dataTable = function() {
         return dt;
@@ -928,6 +965,58 @@ MU.ui.DataCrud = function($container) {
             appendConditions.push(conditions);
         }
     };
+
+    this.addControlButton = function(text, callback) {
+        $('<button type="button" class="btn btn-primary">' + text + '</button>').click(callback).appendTo($buttons);
+    }
+};
+
+MU.QueryCondition = function() {
+    var array = [];
+
+    /**
+     * 添加查询条件
+     * @param name
+     * @param value
+     * @param mode
+     */
+    this.add = function(name, value, mode) {
+        if(value) {
+            array.push({name: name, value: value, mode: mode || '='});
+        }
+    };
+
+    /**
+     * 获得查询条件
+     *
+     * @returns {Array}
+     */
+    this.get = function() {
+        return array;
+    };
+
+    this.toString = function() {
+        return JSON.stringify(array);
+    }
+};
+
+MU.LocalStorage = {
+    put: function(key, value, isObj) {
+        if(isObj) {
+            value = JSON.stringify(value);
+        }
+        window.localStorage.setItem(key, value);
+    },
+    get: function(key, isObj) {
+        var result = window.localStorage.getItem(key);
+        if(isObj) {
+            return JSON.parse(result);
+        }
+        return result;
+    },
+    remove: function(key) {
+        window.localStorage.removeItem(key);
+    }
 };
 
 MU.UString = {
