@@ -1,0 +1,46 @@
+<script type="text/template" id="tpl_rds">
+    <div>
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab_tpl_ectongs_rds" data-toggle="tab">RDS</a></li>
+            <li class=""><a href="#tab_tpl_ectongs_setItem" data-toggle="tab">setItem</a></li>
+            <li class=""><a href="#tab_dbCreateView" data-toggle="tab">创建视图</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane active" id="tab_tpl_ectongs_rds">
+                <textarea class="form-control" style="height: 450px;width: 100%">
+public class {{tableCnName}}RDS extends RemoteDataStore {
+    public static final String DS_CLASS = "wm.{{tableCnName}}DS";
+
+    {{each list}}public static final String CN_{{$value.cnName}} = "{{$value.lowerName}}";    //{{$value.displayName}}
+    {{/each}}
+
+    {{each list}}public static final String QC_{{$value.cnName}} = "{{tableName}}.{{$value.name}}";    //{{$value.displayName}}
+    {{/each}}
+
+    public {{tableCnName}}RDS() {
+        super(DS_CLASS);
+        this.setUpdateAtt(new RemoteDsUpdateAtt(new String[]{
+            {{each list}}CN_{{$value.cnName}}{{if $index < list.length - 1}}, {{/if}}{{if ($index + 1) % 8 == 0}}
+{{/if}}{{/each}}
+        }, CN_{{pkCnName}}));
+    }
+}
+                </textarea>
+            </div>
+
+            <div class="tab-pane " id="tab_tpl_ectongs_setItem">
+                <textarea style="height: 450px;width: 100%" class="form-control">
+{{each list}}ds.setItem(row, {{tableCnName}}RDS.CN_{{$value.cnName}}, "");
+{{/each}}
+                </textarea>
+            </div>
+
+            <div class="tab-pane " id="tab_dbCreateView">
+                <div></div>
+                <div id="selectTables"></div>
+            </div>
+        </div>
+    </div>
+
+</script>

@@ -1025,5 +1025,27 @@ MU.UString = {
     },
     isEmpty: function(str) {
         return !(str && $.trim(str).length > 0);
+    },
+    replaceAll: function(str, source, target) {
+        return str.replace(new RegExp(source, 'g'), target);
+    },
+    // 转换成驼峰字符串
+    convertHumpStr: function(str) {
+        var result = '';
+        str = str.toLowerCase();
+        for(var i = 0; i < str.length; i++) {
+            var c = str.charAt(i);
+            if(c == '_') {
+                result += str.charAt(i + 1).toUpperCase();
+                i++;
+            } else {
+                result += c;
+            }
+        }
+
+        return result;
+    },
+    firstCharToUpper: function(str) {
+        return str.substr(0, 1).toUpperCase() + str.substring(1);
     }
 };

@@ -178,6 +178,41 @@ Tools.DB = function() {
             }).width(850).height(500).show();
         });
 
+        // 可更新属性
+        crud.addControlButton('RDS', function() {
+            var tName = tableName;
+            for(var i = 0; i < 2; i++) {
+                var idx = tName.indexOf('_');
+                if(idx > -1) {
+                    tName = tName.substr(idx + 1);
+                }
+            }
+            tName = MU.UString.convertHumpStr(tName);
+            tName = MU.UString.firstCharToUpper(tName);
+
+            var pk = '';
+            var data = {tableName: tableName, tableCnName: tName};
+            var cols = [];
+            for(i = 0; i < children.length; i++) {
+                var col = children[i];
+                var colName = col.id.split('.')[3];
+                var cnName = MU.UString.replaceAll(colName, '_', '').toUpperCase();
+                var name = 'CN_' + cnName;
+                if(col.isPk) {
+                    pk = cnName;
+                }
+                cols.push({name: colName, cnName: cnName, lowerName: cnName.toLowerCase(), displayName: col.displayName});
+            }
+            data['pkCnName'] = pk;
+            data['list'] = cols;
+
+            console.log(data);
+            dialog({
+                title: 'RDS',
+                content: template('tpl_rds', data)
+            }).width(950).height(500).show();
+        });
+
         var dt = crud.dataTable();
         dt.setHeight(600);
         dt.setColumns(columns);
