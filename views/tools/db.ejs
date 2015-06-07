@@ -1,14 +1,31 @@
-<div class="col-md-3">
-    <div class="btn-group">
-        <a id="btnDbAddDataSource" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>
-        <a id="btnDbSearch" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></a>
-    </div>
-    <div style="height: 800px;overflow: scroll">
-        <ul id="dbBrowser" class="ztree"></ul>
+<div class="col-md-2">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#tab_dbDataSource" data-toggle="tab">数据源</a></li>
+        <li class=""><a href="#tab_dbMyFavorites" data-toggle="tab">我的收藏</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane active" id="tab_dbDataSource">
+            <div class="btn-group" style="margin-top: 5px;">
+                <a id="btnDbAddDataSource" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>
+                <a id="btnDbSearch" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></a>
+            </div>
+            <div style="height: 800px;overflow: scroll">
+                <ul id="dbBrowser" class="ztree"></ul>
+            </div>
+        </div>
+        <div class="tab-pane" id="tab_dbMyFavorites">
+            <ul id="dbFavoritesList" class="nav nav-pills nav-stacked">
+                <!--<li><a><span class="label label-default">__system__</span><span class="label label-primary">metaui</span><span class="label label-success">mu_meta</span></a></li>
+                <li><a><span class="label label-default">__system__</span><span class="label label-primary">metaui</span><span class="label label-success">mu_meta</span></a></li>
+                <li><a><span class="label label-default">__system__</span><span class="label label-primary">metaui</span><span class="label label-success">mu_meta</span></a></li>
+                <li><a><span class="label label-default">__system__</span><span class="label label-primary">metaui</span><span class="label label-success">mu_meta</span></a></li>-->
+            </ul>
+        </div>
     </div>
 </div>
-<div class="col-md-9">
-    <div style="min-height: 600px;">
+<div class="col-md-10">
+    <div style="min-height: 500px;">
         <ul class="nav nav-tabs">
             <li class="active"><a href="#tab_dbTables" data-toggle="tab">表数据</a></li>
             <li class=""><a href="#tab_dbSqlConsole" data-toggle="tab">SQL控制台</a></li>
@@ -41,6 +58,10 @@
     <li class="delete"><a href="#"><span class="glyphicon glyphicon-trash"></span> 删除</a></li>
 </ul>
 
+<ul id="treeMenuTable" class="dropdown-menu" style="display: none;">
+    <li class="favorites"><a href="#"><span class="glyphicon glyphicon-star-empty"></span> 添加收藏</a></li>
+</ul>
+
 <script type="text/template" id="tpl_dbTrace">
     <!--<div class="flex">
         <select id="dbDataSourceSelect">
@@ -58,4 +79,15 @@
         <a id="btnDbAddTrace" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>
     </div>-->
 
+    <div style="height: 330px;overflow: auto">
+        <table style="width: 100%;" id="dbTraceTable">
+            <thead>
+            <tr>
+                <th>父表列</th>
+                <th>子表列</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </script>

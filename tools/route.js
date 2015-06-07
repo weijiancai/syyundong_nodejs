@@ -11,6 +11,7 @@ var Ftp = require('ftp');
 var iconv = require('iconv-lite');
 var sqlBuilder = require('../lib/sqlBuilder');
 var router = express.Router();
+var underscore = require('underscore');
 
 //db.setDataSource(config.getDataSource('sh'));
 
@@ -209,8 +210,128 @@ router.post('/dbSearch', function(req, res, next) {
         res.send(data);
     });
 });
+// 获得外键引用列
+router.post('/dbGetFkRefCol', function(req, res, next) {
+    var table = req.body.table;
 
+    var traces = config.getDbTrace(table);
+    if(traces) {
+        res.send(traces);
+        return;
+    }
 
+    var strs = table.split('.');
+    var datasource = strs[0];
+    var schema = strs[1];
+    var tableName = strs[2];
+    db.setDataSource(config.getDataSource(datasource));
+    db.getFKConstraintsColumns(schema, function(data) {
+        var result = [], aCache = [];
+        var prefix = datasource + '.' + schema + '.';
+        iterator(tableName);
+
+        function iterator(refTableName, refColName) {
+            for(var i = 0; i < data.length; i++) {
+                if(underscore._.indexOf(aCache, i) > -1) {
+                    continue;
+                }
+
+                var obj = data[i];
+                if(obj['referenced_table_name'] == refTableName) {
+                    var parentCol = prefix + refTableName + '.' + obj['referenced_column_name'];
+                    result.push({parentCol: parentCol, childCol: prefix + obj['table_name'] + '.' + obj['column_name']});
+                    aCache.push(i);
+                    iterator(obj['table_name'], obj['column_name']);
+                }
+            }
+        }
+
+        res.send(result);
+    });
+});
+// 获得数据库收藏
+router.post('/dbGetFavorites', function(req, res, next) {
+    res.send(config.getDbFavorites());
+});
+// 添加数据库收藏
+router.post('/dbAddFavorites', function(req, res, next) {
+    var dbId = req.body.dbId;
+    config.addDbFavorites(dbId);
+    res.send();
+});
+// 保存数据追踪
+router.post('/dbSaveTrace', function(req, res, next) {
+    var table = req.body.table;
+    var traces = req.body.traces;
+    config.addDbTrace(table, JSON.parse(traces));
+    res.send();
+});
+// 数据追踪
+router.get('/dbTrace', function(req, res, next) {
+    var table = req.query.table;
+    var data = JSON.parse(req.query.data);
+    var result = [];
+    result.push({table: table, data: data});
+    var traces = config.getDbTrace(table);
+    if(!traces || traces.length == 0) {
+        res.send('<h2>请配置数据跟踪！</h2>');
+        return;
+    }
+
+    function getTableName(parentCol) {
+        return parentCol.substr(0, parentCol.lastIndexOf('.'));
+    }
+
+    var dataCache = {};
+    dataCache[getTableName(traces[0].parentCol)] = data;
+
+    function iterator(parentCol, childCol, i) {
+        var strs = childCol.split('.');
+        var datasource = strs[0];
+        var schema = strs[1];
+        var tableName = strs[2];
+        var colName = strs[3];
+
+        var array = [];
+        var data = dataCache[getTableName(parentCol)];
+        for(var j = 0; j < data.length; j++) {
+            array.push(data[j][parentCol.split('.')[3]]);
+        }
+
+        // 下一个
+        function next(data) {
+            result.push({table: datasource + '.' + schema + '.' + tableName, data: data});
+            if(i == traces.length - 1) {
+                res.render('tools/db_trace', {result: result});
+            } else {
+                i++;
+                dataCache[getTableName(traces[i].parentCol)] = data.concat(dataCache[getTableName(traces[i].parentCol)] || []);
+                iterator(traces[i].parentCol, traces[i].childCol, i);
+            }
+        }
+
+        if(array.length == 0) {
+            next([]);
+            return;
+        }
+
+        var ds =config.getDataSource(datasource);
+        db.setDataSource(ds);
+        var tName;
+        if(ds.dbType == 'sqlServer') {
+            tName = '[' + schema + '].dbo.' + tableName;
+        } else {
+            tName = schema + '.' + tableName;
+        }
+        var builder = sqlBuilder.create().query().from(tName);
+        builder.and(colName, array);
+        db.query(builder.build(), function(data) {
+            next(data);
+        });
+    }
+
+    iterator(traces[0].parentCol, traces[0].childCol, 0);
+});
 
 router.get('/getWebPage', function(req, res, next) {
     var url = req.query.url;

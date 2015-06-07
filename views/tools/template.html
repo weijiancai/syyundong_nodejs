@@ -44,3 +44,10 @@ public class {{tableCnName}}RDS extends RemoteDataStore {
     </div>
 
 </script>
+
+<!-- 我的收藏列表 -->
+<script type="text/template" id="tpl_dbFavoritesList">
+    {{each list as value i}}
+    <li class="{{if (i == 0)}}active{{/if}}"><a href="#">{{value}}</a></li>
+    {{/each}}
+</script>

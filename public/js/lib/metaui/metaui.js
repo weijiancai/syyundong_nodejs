@@ -232,6 +232,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                 var check = data ? 'checked="checked"' : '';
                 return '<input type="checkbox" class="checkboxes" ' + check + '/>';
             },
+            data: '_checked_',
             title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
             orderable: false,
             editable: false, // 不可编辑
@@ -941,9 +942,11 @@ MU.ui.DataCrud = function($container) {
     $btnDelete.click(function() {
         dt.delete();
     });
-    // 数据跟踪
 
-
+    /**
+     *
+     * @returns {MU.ui.DataTable}
+     */
     this.dataTable = function() {
         return dt;
     };
@@ -968,6 +971,58 @@ MU.ui.DataCrud = function($container) {
 
     this.addControlButton = function(text, callback) {
         $('<button type="button" class="btn btn-primary">' + text + '</button>').click(callback).appendTo($buttons);
+    }
+};
+
+MU.ui.ComboTree = function($container, options) {
+    var $tpl = $('<div class="dropdown">' +
+        '    <input type="text" class="dropdown-toggle">' +
+        '    <ul class="dropdown-menu ztree"></ul>' +
+        '</div>').appendTo($container);
+
+    var $input = $tpl.find('input');
+    var $ul = $tpl.find('ul').attr('id', MU.GUID());
+    var treeNodeAttrName = 'name';
+    var self = this;
+
+    if(!options.callback) {
+        options.callback = {};
+    }
+    options.callback.onClick = function(event, treeId, treeNode) {
+        self.setValue(treeNode[treeNodeAttrName]);
+        self.hide();
+    };
+
+    this.show = function() {
+        $tpl.addClass('on');
+        $ul.show();
+    };
+
+    this.hide = function() {
+        $ul.hide();
+        $tpl.removeClass('on');
+    };
+
+    $input.focus(self.show);
+    $tpl.mouseleave(self.hide);
+
+    // 初始化树
+    $.fn.zTree.init($ul, options);
+
+    this.setValue = function(val) {
+        $input.val(val);
+    };
+
+    this.getValue = function() {
+        return $input.val();
+    };
+
+    this.setTreeNodeAttrName = function(attrName) {
+        treeNodeAttrName = attrName;
+    };
+
+    this.getInput = function() {
+        return $input;
     }
 };
 
@@ -1047,5 +1102,27 @@ MU.UString = {
     },
     firstCharToUpper: function(str) {
         return str.substr(0, 1).toUpperCase() + str.substring(1);
+    }
+};
+
+/**
+ * 生成GUID，如果传递了参数，则生成带中线的GUID，默认不带中线
+ *
+ * @return {string} 返GUID，默认不带中线
+ */
+MU.GUID = function () {
+    /**
+     * @return {string}
+     */
+    function S4() {
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16)
+            .substring(1);
+    }
+
+    if (arguments[0]) {
+        return (S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-'
+        + S4() + S4() + S4());
+    } else {
+        return (S4() + S4() + S4() + S4() + S4() + S4() + S4() + S4());
     }
 };

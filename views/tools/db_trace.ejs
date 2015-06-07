@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<!-- 
+
+Template Name: Metronic - Responsive Admin Dashboard Template build with Twitter Bootstrap 2.3.1
+
+Version: 1.3
+
+Author: KeenThemes
+
+Website: http://www.keenthemes.com/preview/?theme=metronic
+
+Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-template/4021469
+
+-->
+
+<!--[if IE 8]> <html lang="en" class="ie8 no-js"> <![endif]-->
+
+<!--[if IE 9]> <html lang="en" class="ie9 no-js"> <![endif]-->
+
+<!--[if !IE]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+
+<!-- BEGIN HEAD -->
+
+<head>
+	<meta charset="utf-8" />
+	<title>Metronic | Admin Dashboard Template</title>
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<meta content="" name="description" />
+	<meta content="" name="author" />
+	<!-- BEGIN GLOBAL MANDATORY STYLES -->
+	<link href="/public/css/bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css"/>
+	<!--<link href="/views/admin/media/css/bootstrap-responsive.min.css" rel="stylesheet" type="text/css"/>-->
+	<link href="/views/admin/media/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+	<!--<link href="/views/admin/media/css/style-metro.css" rel="stylesheet" type="text/css"/>-->
+	<!-- END GLOBAL MANDATORY STYLES -->
+
+	<!-- BEGIN PAGE LEVEL STYLES --> 
+	<!-- END PAGE LEVEL STYLES -->
+
+    <link href="/public/js/lib/datatable/css/jquery.dataTables.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/datatable/extension/ColReorder-1.1.3/css/dataTables.colReorder.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/datatable/extension/ColVis-1.1.2/css/dataTables.colVis.css" rel="stylesheet" type="text/css" media="screen"/>
+    <!--<link href="/public/js/lib/datatable/css/dataTables.bootstrap.css" rel="stylesheet" type="text/css" media="screen"/>-->
+    <link href="/public/js/lib/ztree/css/zTreeStyle/zTreeStyle.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/dmuploader/uploader.css" rel="stylesheet" type="text/css" media="screen"/>
+	<link type="text/css" rel="stylesheet" href="/public/js/lib/bootstrap-daterangepicker/daterangepicker-bs3.css">
+    <link href="/public/js/lib/artDialog/ui-dialog.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/metaui/metaui.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/metaui/layout.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/public/js/lib/codemirror/codemirror.css" rel="stylesheet" type="text/css" media="screen"/>
+    <link href="/tools/css/page_tools.css" rel="stylesheet" type="text/css" media="screen"/>
+
+	<link rel="shortcut icon" href="/views/admin/media/image/favicon.ico" />
+
+</head>
+
+<!-- END HEAD -->
+
+<!-- BEGIN BODY -->
+
+<body class="container-fluid">
+<% for(var i = 0 ; i < result.length; i++) { var obj = result[i];%>
+
+<div class="row">
+    <div class="alert alert-success" role="alert" style="margin-bottom: 5px;">
+
+        <span class="label label-default"><%= obj.table.split('.')[0] %></span>
+        <span class="label label-primary"><%= obj.table.split('.')[1] %></span>
+        <span class="label label-success"><%= obj.table.split('.')[2] %></span>
+    </div>
+
+    <% if(obj.data && obj.data.length > 0) { %>
+	<table>
+		<thead>
+		<tr>
+			<% for(var key in obj.data[0]) { %>
+			<th><%= key %></th>
+			<%}%>
+		</tr>
+		</thead>
+		<tbody>
+		<% if(obj.data && obj.data.length > 0) for(var j = 0; j < obj.data.length; j++) {
+		%>
+		<tr>
+		<% for(key in obj.data[j]) { %>
+		<td><%= obj.data[j][key] %></td>
+		<%}%>
+		</tr>
+		<%}%>
+		</tbody>
+	</table>
+    <%}%>
+</div>
+<%}%>
+
+
+
+<!-- BEGIN JAVASCRIPTS(Load javascripts at bottom, this will reduce page load time) -->
+
+<!-- BEGIN CORE PLUGINS -->
+<script type="text/javascript" src="/public/js/lib/jquery-2.1.3/jquery-2.1.3.js"></script>
+
+<!-- IMPORTANT! Load jquery-ui-1.10.1.custom.min.js before bootstrap.min.js to fix bootstrap tooltip conflict with jquery ui tooltip -->
+
+<script src="/views/admin/media/js/jquery-ui-1.10.1.custom.min.js" type="text/javascript"></script>
+<script src="/public/css/bootstrap/js/bootstrap.js" type="text/javascript"></script>
+
+<!--[if lt IE 9]>
+
+<script src="/views/admin/media/js/excanvas.min.js"></script>
+<script src="/views/admin/media/js/respond.min.js"></script>
+
+<![endif]-->
+
+<script src="/views/admin/media/js/jquery.slimscroll.min.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/jquery.blockui.min.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/jquery.cookie.min.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/jquery.uniform.min.js" type="text/javascript" ></script>
+<!-- END CORE PLUGINS -->
+
+<!-- BEGIN PAGE LEVEL PLUGINS -->
+
+<script src="/views/admin/media/js/date.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/daterangepicker.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/jquery.gritter.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/fullcalendar.min.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/jquery.easy-pie-chart.js" type="text/javascript"></script>
+<script src="/views/admin/media/js/jquery.sparkline.min.js" type="text/javascript"></script>
+<!-- END PAGE LEVEL PLUGINS -->
+
+<!-- BEGIN PAGE LEVEL SCRIPTS -->
+<script src="/views/admin/media/js/app.js" type="text/javascript"></script>
+<!--<script src="/views/admin/media/js/index.js" type="text/javascript"></script>-->
+<script type="text/javascript" src="/public/js/lib/jquery.validate.js"></script>
+<script src="/public/js/lib/datatable/js/jquery.dataTables.js" type="text/javascript"></script>
+<script src="/public/js/lib/datatable/extension/ColReorder-1.1.3/js/dataTables.colReorder.js" type="text/javascript"></script>
+<script src="/public/js/lib/datatable/extension/ColVis-1.1.2/js/dataTables.colVis.js" type="text/javascript"></script>
+<script src="/public/js/lib/ztree/js/jquery.ztree.all-3.5.js" type="text/javascript"></script>
+<script src="/public/js/lib/dmuploader/dmuploader.js" type="text/javascript"></script>
+<script src="/public/js/lib/dmuploader/uploader_demo.js" type="text/javascript"></script>
+<script src="/public/js/lib/artDialog/dialog.js" type="text/javascript"></script>
+<script src="/public/js/lib/codemirror/codemirror.js" type="text/javascript"></script>
+<script src="/public/js/lib/codemirror/mode/xml/xml.js" type="text/javascript"></script>
+<script src="/public/js/lib/codemirror/mode/javascript/javascript.js" type="text/javascript"></script>
+<script src="/public/js/lib/codemirror/mode/css/css.js" type="text/javascript"></script>
+<script src="/public/js/lib/codemirror/mode/htmlmixed/htmlmixed.js" type="text/javascript"></script>
+<script type="text/javascript" src="/public/js/lib/bootstrap-daterangepicker/moment.js"></script>
+<script type="text/javascript" src="/public/js/lib/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script type="text/javascript" src="/public/js/lib/jeditable/jquery.jeditable.js"></script>
+<script type="text/javascript" src="/public/js/lib/jeditable/jquery.jeditable.datetimepicker.js"></script>
+<script type="text/javascript" src="/public/js/lib/jquery-shortcuts/jquery.shortcuts.js"></script>
+<script src="/public/js/lib/metaui/commen.js" type="text/javascript"></script>
+<script src="/public/js/lib/metaui/metaui.js" type="text/javascript"></script>
+<script src="/public/js/lib/template.js" type="text/javascript"></script>
+<script src="/public/js/page_tools.js" type="text/javascript"></script>
+<script src="/tools/js/ftp.js" type="text/javascript"></script>
+<script src="/tools/js/db.js" type="text/javascript"></script>
+<script src="/tools/js/tpl.js" type="text/javascript"></script>
+
+<!-- END PAGE LEVEL SCRIPTS -->
+
+<script>
+	$(function() {
+		/*$('table').each(function() {
+            $(this).DataTable({
+                "searching": false,
+                "lengthChange": false,
+                "processing": true,
+                "serverSide": false, // 服务器端排序
+                "paginate": true, // 分页
+                "info": false,
+                //"paginationType": "bootstrap",
+                //"scrollX": true,
+                "columns": [],
+                "ajax": {url: '', type: 'POST', data: {}},
+                //"retrieve": true,
+                "destroy": true,
+                "dom": 'Rlfrtip', // 列可拖动
+                stateSave: true, // 保存列拖动后的设置
+                "initComplete": function(setting) {
+
+                }
+            });
+        });*/
+
+        $('table').dataTable({
+            "searching": false,
+            "lengthChange": false,
+            "processing": true,
+            "serverSide": false, // 服务器端排序
+            "paginate": false, // 分页
+            "info": false,
+            //"retrieve": true,
+            "destroy": true,
+            "dom": 'Rlfrtip', // 列可拖动
+            stateSave: true, // 保存列拖动后的设置
+            "initComplete": function(setting) {
+
+            }
+        });
+	})
+</script>
+
+	<!-- END JAVASCRIPTS -->
+</body>
+
+<!-- END BODY -->
+
+</html>

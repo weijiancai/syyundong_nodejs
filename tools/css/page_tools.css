@@ -83,3 +83,12 @@ label {
     color: #004E92;
     padding: 0 5px;
 }
+
+.dropdown-menu {
+    z-index: 2024;
+}
+
+#dbFavoritesList span {
+    margin-right: 8px;
+    font-size: 12px;
+}

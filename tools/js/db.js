@@ -14,6 +14,27 @@ Tools.DB = function() {
         {name: 'database', displayName: '数据库：', required: true}
     ];
 
+    var dbOption = {
+        async: {
+            enable: true,
+            url: '/tools/dbBrowser',
+            type: 'post',
+            autoParam:["id", "type"]
+        },
+        callback: {
+            onAsyncSuccess: function (event, treeId, treeNode, msg) {
+                if(treeNode) {
+                    var zTree = $.fn.zTree.getZTreeObj(treeId);
+                    treeNode.name = treeNode.name + '<span class="num">(' + treeNode.children.length + ')</span>';
+                    zTree.updateNode(treeNode);
+                }
+            }
+        },
+        view: {
+            nameIsHTML: true
+        }
+    };
+
     this.init = function() {
         // 数据库浏览
         $.fn.zTree.init($("#dbBrowser"), {
@@ -53,8 +74,11 @@ Tools.DB = function() {
                 },
                 onRightClick: function(event, treeId, treeNode) { // 右键菜单
                     if(treeNode && !treeNode.noR) {
+                        var css = {"top": event.clientY + "px", "left": event.clientX + "px", "visibility":"visible"};
                         if(treeNode.type == 'datasource') {
-                            $('#treeMenuDataSource').show().css({"top": event.clientY + "px", "left": event.clientX + "px", "visibility":"visible"});
+                            $('#treeMenuDataSource').show().css(css);
+                        } else if(treeNode.type == 'table') {
+                            $('#treeMenuTable').show().css(css);
                         }
                     }
                 }
@@ -62,6 +86,20 @@ Tools.DB = function() {
             view: {
                 nameIsHTML: true
             }
+        });
+
+        var $dbFavoritesList = $('#dbFavoritesList');
+        $dbFavoritesList.on('click', 'li', function() {
+            $dbFavoritesList.find('li').removeClass('active');
+            $(this).addClass('active');
+            var dbId = $(this).find('a').text();
+            self.genTable(dbId);
+        });
+
+        // 获得数据库收藏
+        $.post('/tools/dbGetFavorites', function(data) {
+            $dbFavoritesList.append(template('tpl_dbFavoritesList', {list: data}));
+
         });
 
         var cmSql = CodeMirror.fromTextArea($('#dbSqlConsole').get(0), {
@@ -101,8 +139,34 @@ Tools.DB = function() {
 
             if($this.hasClass('edit')) {
                 self.editDataSource(nodes[0]);
-            }if($this.hasClass('delete')) {
+            } else if($this.hasClass('delete')) {
                 self.deleteDataSource(nodes[0]);
+            }
+        });
+
+        // 表右键菜单
+        var $treeMenuTable = $('#treeMenuTable');
+        $treeMenuTable.find('li').on('click', function(e) {
+            e.preventDefault();
+
+            $treeMenuTable.hide();
+            var $this = $(this);
+
+            var treeObj = $.fn.zTree.getZTreeObj("dbBrowser");
+            var nodes = treeObj.getSelectedNodes();
+            if(!nodes || nodes.length == 0) {
+                dialog({
+                    title: '警告',
+                    content: '请选择表！'
+                }).show();
+                return;
+            }
+
+            if($this.hasClass('favorites')) {
+                var dbId = nodes[0].id;
+                $.post('/tools/dbAddFavorites', {dbId: dbId}, function() {
+                    $dbFavoritesList.append('<li><a href="#">' + dbId +'</a></li>');
+                });
             }
         });
 
@@ -161,6 +225,15 @@ Tools.DB = function() {
         var $tabs = $('#db_tablesPanel');
         var $ul = $tabs.find('ul');
         $ul.find('li').removeClass('active');
+        var isHave;
+        $ul.find('a').each(function() {
+            if($(this).text() == tableName) {
+                isHave = true;
+            }
+        });
+        if(isHave) {
+            return;
+        }
         $ul.append('<li class="active"><a href="#table_' + tableName + '" data-toggle="tab">' + tableName + '</a></li>');
 
         var $panel = $tabs.find('div.tab-content');
@@ -172,10 +245,79 @@ Tools.DB = function() {
         var crud = new MU.ui.DataCrud($newPanel);
         // 数据追踪
         crud.addControlButton('数据追踪', function() {
+            var dt = crud.dataTable();
+            var selectedData = dt.getSelectedRow();
+            if(selectedData.length == 0) {
+                MU.ui.Message.alert('请选择数据！');
+                return;
+            }
             dialog({
                 title: '数据追踪',
-                content: $('#tpl_dbTrace').html()
-            }).width(850).height(500).show();
+                content: $('#tpl_dbTrace').html(),
+                cancel: false,
+                button: [
+                    {
+                        value: '保存',
+                        callback: function() {
+                            var $content = this._$('content');
+                            var traces = [];
+
+                            $content.find('table tbody tr').each(function() {
+                                var parent = $(this).find('td:eq(0) input').val();
+                                var child = $(this).find('td:eq(1) input').val();
+                                traces.push({parentCol: parent, childCol: child});
+                            });
+                            $.post('/tools/dbSaveTrace', {table: id, traces: JSON.stringify(traces)}, function() {
+                                MU.ui.Message.alert('保存成功！');
+                            });
+
+                            return false;
+                        }
+                    },
+                    {
+                        value: '追踪',
+                        callback: function() {
+                            window.open('/tools/dbTrace?table=' + id + '&data=' + JSON.stringify(selectedData));
+                        }
+                    }
+                ],
+                onshow: function() {
+                    var $content = this._$('content');
+                    var $tbody = $content.find('tbody');
+
+                    function appendRow(value1, value2) {
+                        var tr = $('<tr></tr>').appendTo($tbody);
+                        var td1 = $('<td></td>').appendTo(tr);
+                        var td2 = $('<td></td>').appendTo(tr);
+                        var td3 = $('<td class="width:4%"></td>').appendTo(tr);
+                        var plus = $('<a class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>').appendTo(td3);
+
+                        plus.click(function() {
+                            appendRow();
+                        });
+
+                        var tree1 = new MU.ui.ComboTree(td1, dbOption);
+                        tree1.getInput().css('width', '360px');
+                        tree1.setTreeNodeAttrName('id');
+                        tree1.setValue(value1);
+                        var tree2 = new MU.ui.ComboTree(td2, dbOption)
+                        tree2.getInput().css('width', '360px');
+                        tree2.setTreeNodeAttrName('id');
+                        tree2.setValue(value2);
+                    }
+
+                    $.post('/tools/dbGetFkRefCol', {table: id}, function(data) {
+                        if(data && data.length > 0) {
+                            for(var i = 0; i < data.length; i++) {
+                                appendRow(data[i]['parentCol'], data[i]['childCol']);
+                            }
+                        } else {
+                            appendRow();
+                        }
+                    });
+
+                }
+            }).width(800).height(350).show();
         });
 
         // 可更新属性
