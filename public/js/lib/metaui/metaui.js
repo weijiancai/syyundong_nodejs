@@ -283,6 +283,50 @@ MU.ui.DataTable = function($container, $toolbar) {
             };
             var colvis = new $.fn.dataTable.ColVis(dt, options);
             $(colvis.button()).appendTo($toolbar);
+
+            // 列信息
+            var btnColSetting = $('<button type="button" class="btn btn-primary pull-right">列信息</button>').appendTo($toolbar);
+            btnColSetting.one('click', function() {
+                var cols = [
+                    {data: 'name', title: '名称', className: 'varchar'},
+                    {data: 'displayName', title: '显示名', className: 'varchar'},
+                    {data: 'dataType', title: '数据类型'},
+                    {data: 'width', title: '宽', editable: true},
+                    {data: 'isDisplay', title: '是否显示', editable: true},
+                    {data: 'isPk', title: '主键'},
+                    {data: 'isFk', title: '外键'},
+                    {data: 'displayStyle', title: '显示风格', editable: true},
+                    {data: 'dict', title: '数据字典', editable: true},
+                    {data: 'align', title: '对齐', editable: true},
+                    {data: 'sortNum', title: '排序号', editable: true}
+                ];
+                cols[0].render = cols[1].render = function(data) {
+                    return '<div>' + (data ? data : '') + '</div>';
+                };
+
+                var data = [];
+                for(var i = 1; i < option.columns.length; i++) {
+                    var col = option.columns[i];
+                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, sortNum: i};
+                    data.push(obj);
+                }
+
+                dialog({
+                    title: '列信息',
+                    content: '<div><table></table></div>',
+                    onshow: function() {
+                        var $content = this._$('content');
+                        var dataTable = new MU.ui.DataTable($content.find('table'));
+                        dataTable.setColumns(cols);
+                        dataTable.setHeight(300);
+                        dataTable.applyOption({
+                            data: data,
+                            serverSide: false,
+                            paginate: false
+                        });
+                    }
+                }).width(1200).show();
+            });
         }
     };
 

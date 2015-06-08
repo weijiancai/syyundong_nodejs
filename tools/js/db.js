@@ -523,6 +523,7 @@ function showFkDetail(table, column, value) {
         form.fieldList = columns;
         var content = form.gen();
         form.setValues(data.data);
+        content.css({maxHeight: '800px', overflow: 'auto'});
 
         dialog({
             title: data.fkTable,
