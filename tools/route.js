@@ -36,7 +36,7 @@ router.post('/dbRetrieve', function(req, res, next) {
     var conditions = req.body.conditions;
 
     var datasource = id.split('.')[0];
-    var ds = config.getDataSource(datasource);
+    var ds = config.getDataSource(datasource, id.split('.')[1]);
     db.setDataSource(ds);
     /*var conditions = eval('(' + req.body.conditions + ')');
     var where = '';
@@ -89,8 +89,13 @@ router.post('/dbEditTable', function(req, res, next) {
     var column = req.body.column;
 
     var datasource = table.split('.')[0];
-    db.setDataSource(config.getDataSource(datasource));
-    var sql = "UPDATE " + table.substr(datasource.length + 1) + " SET " + column + "='" + value + "' WHERE ";
+    var ds = config.getDataSource(datasource, table.split('.')[1]);
+    db.setDataSource(ds);
+    var tableName = table.substr(datasource.length + 1);
+    if(ds.dbType == 'sqlServer') {
+        tableName = tableName.replace('.', '.dbo.');
+    }
+    var sql = "UPDATE " + tableName + " SET " + column + "='" + value + "' WHERE ";
     var pkArray = pks.split(',');
     var pkValueArray = pkValues.split(',');
     for(var i = 0; i < pkArray.length; i++) {
@@ -110,7 +115,7 @@ router.post('/dbDeleteTableRow', function(req, res, next) {
     var conditions = req.body.conditions;
 
     var datasource = table.split('.')[0];
-    var ds = config.getDataSource(datasource);
+    var ds = config.getDataSource(datasource, table.split('.')[1]);
     db.setDataSource(ds);
     var tableName = table.substr(datasource.length + 1);
     if(ds.dbType == 'sqlServer') {
@@ -170,7 +175,7 @@ router.post('/dbShowFkDetail', function(req, res, next) {
     var datasource = strs[0];
     var schema = strs[1];
     var tableName = strs[2];
-    db.setDataSource(config.getDataSource(datasource));
+    db.setDataSource(config.getDataSource(datasource, schema));
     db.getFKConstraintsColumns(schema, function(data) {
         console.log(data);
         if(data.length == 1) {
@@ -224,7 +229,7 @@ router.post('/dbGetFkRefCol', function(req, res, next) {
     var datasource = strs[0];
     var schema = strs[1];
     var tableName = strs[2];
-    db.setDataSource(config.getDataSource(datasource));
+    db.setDataSource(config.getDataSource(datasource, schema));
     db.getFKConstraintsColumns(schema, function(data) {
         var result = [], aCache = [];
         var prefix = datasource + '.' + schema + '.';
@@ -315,7 +320,7 @@ router.get('/dbTrace', function(req, res, next) {
             return;
         }
 
-        var ds =config.getDataSource(datasource);
+        var ds =config.getDataSource(datasource, schema);
         db.setDataSource(ds);
         var tName;
         if(ds.dbType == 'sqlServer') {

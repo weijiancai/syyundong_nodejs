@@ -11,7 +11,7 @@ Tools.DB = function() {
         {name: 'port', displayName: '端口：', required: true},
         {name: 'user', displayName: '用户名：', required: true},
         {name: 'password', displayName: '密码：', required: true, displayStyle: MU.C_DS_PASSWORD},
-        {name: 'database', displayName: '数据库：', required: true}
+        {name: 'database', displayName: '数据库：', required: false}
     ];
 
     var dbOption = {
@@ -254,7 +254,6 @@ Tools.DB = function() {
             dialog({
                 title: '数据追踪',
                 content: $('#tpl_dbTrace').html(),
-                cancel: false,
                 button: [
                     {
                         value: '保存',
@@ -300,7 +299,7 @@ Tools.DB = function() {
                         tree1.getInput().css('width', '360px');
                         tree1.setTreeNodeAttrName('id');
                         tree1.setValue(value1);
-                        var tree2 = new MU.ui.ComboTree(td2, dbOption)
+                        var tree2 = new MU.ui.ComboTree(td2, dbOption);
                         tree2.getInput().css('width', '360px');
                         tree2.setTreeNodeAttrName('id');
                         tree2.setValue(value2);
@@ -315,9 +314,57 @@ Tools.DB = function() {
                             appendRow();
                         }
                     });
-
                 }
             }).width(800).height(350).show();
+        });
+
+        // 数据变化
+        crud.addControlButton('数据变化', function() {
+            var dt = crud.dataTable();
+
+            if(!dt.setTraceDataChange()) {
+                return;
+            }
+            var data = dt.getTraceDataChange();
+
+            dialog({
+                title: '数据变化历史',
+                content: '<div><table></table></div>',
+                onshow: function() {
+                    var $content = this._$('content');
+                    var dt = new MU.ui.DataTable($content.find('table'));
+                    var columns = [];
+                    for(var i = 0; i < children.length; i++) {
+                        var column = children[i];
+                        var name = column.id.split('.')[3];
+                        var obj = {data: name, title: name, dataType: column.dataType, className: column.dataType, isPk: column.isPk, isFk: column.isFk, editable: true, displayName: column.displayName, tip: column.name};
+                        obj.render = (function(colName) {
+                            return function(value, type, rowData, meta) {
+                                var clazz = '';
+                                var row = meta.row;
+                                if(row > 0) {
+                                    if(value != data[row - 1][colName]) {
+                                        clazz = 'differ';
+                                    }
+                                }
+                                return '<div class="' + clazz +'">' + (value ? value : '') + '</div>';
+                            }
+                        })(name);
+                        if(obj.isPk) {
+                            pk = obj.data;
+                        }
+                        obj.defaultContent = '';
+                        columns.push(obj);
+                    }
+                    dt.setColumns(columns);
+                    dt.setHeight(300);
+                    dt.applyOption({
+                        data: data,
+                        serverSide: false,
+                        paginate: false
+                    });
+                }
+            }).width(1200).height(350).show();
         });
 
         // 可更新属性
@@ -357,7 +404,7 @@ Tools.DB = function() {
 
         var dt = crud.dataTable();
         dt.setHeight(600);
-        dt.setColumns(columns);
+        dt.setColumns($.extend([], columns));
         dt.setUrl('/tools/dbRetrieve?id=' + id + '&pk=' + (pk ? pk : ''));
         dt.setEditable(true, '/tools/dbEditTable', {table: id});
         dt.setDeleteUrl('/tools/dbDeleteTableRow', {table: id});

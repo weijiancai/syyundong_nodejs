@@ -107,6 +107,11 @@ input.text-error, textarea.text-error, select.text-error {
     text-align: center;
 }
 .dataTable .char {
-    max-width: 80px;
+    max-width: 120px;
     text-align: center;
+}
+
+.dataTable .differ {
+    background-color: #aa5500;
+    color: white;
 }

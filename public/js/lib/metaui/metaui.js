@@ -50,17 +50,20 @@ MU.ui.DataTable = function($container, $toolbar) {
     var deleteUrl; // 删除行url
     var deleteParams; // 删除行参数
 
+    // 回掉函数
+    var onDataEnd; // 数据准备好后，回掉
+
     var option = {
         "searching": false,
         "lengthChange": false,
         "processing": true,
-        "serverSide": false, // 服务器端排序
+        "serverSide": true, // 服务器端排序
         "paginate": true, // 分页
         "info": false,
         //"paginationType": "bootstrap",
         //"scrollX": true,
         "columns": [],
-        "ajax": {url: '', type: 'POST', data: {}},
+        //"ajax": {url: '', type: 'POST', data: {}},
         //"retrieve": true,
         "destroy": true,
         "dom": 'Rlfrtip', // 列可拖动
@@ -72,38 +75,40 @@ MU.ui.DataTable = function($container, $toolbar) {
 
     $container.on('init.dt', function() {
         console.log('init.dt');
-        var $con = $(dt.table().container());
-        var $headers = $con.find('th');
-        $headers.eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
-        $con.find("select, input, a.button, button").uniform();
+        if(dt && dt.table()) {
+            var $con = $(dt.table().container());
+            var $headers = $con.find('th');
+            $headers.eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
+            $con.find("select, input, a.button, button").uniform();
 
-        // header提示
-        $headers.each(function(idx) {
-            var orders = dt.colReorder.order();
-            var curColumn = option.columns[orders[idx]];
-            if(curColumn && curColumn.tip) {
-                $(this).attr('title', $('<div>' + curColumn.tip + '</div>').text());
-                /*$(this).on('hover', function() {
-                    console.log(this);
-                    $(this).tooltip('show');
-                }).data('toggle', 'toggle').tooltip({trigger: 'hover', title: curColumn.tip});*/
-            }
-        });
-
-        // 复选框全选
-        var $groupCheck = $con.find('.group-checkable');
-        $groupCheck.change(function () {
-            var set = $(this).attr("data-set");
-            var checked = $(this).is(":checked");
-            $container.find(set).each(function () {
-                if (checked) {
-                    $(this).attr("checked", "checked");
-                } else {
-                    $(this).removeAttr('checked');
+            // header提示
+            $headers.each(function(idx) {
+                var orders = dt.colReorder.order();
+                var curColumn = option.columns[orders[idx]];
+                if(curColumn && curColumn.tip) {
+                    $(this).attr('title', $('<div>' + curColumn.tip + '</div>').text());
+                    /*$(this).on('hover', function() {
+                     console.log(this);
+                     $(this).tooltip('show');
+                     }).data('toggle', 'toggle').tooltip({trigger: 'hover', title: curColumn.tip});*/
                 }
             });
-            $.uniform.update(set);
-        });
+
+            // 复选框全选
+            var $groupCheck = $con.find('.group-checkable');
+            $groupCheck.change(function () {
+                var set = $(this).attr("data-set");
+                var checked = $(this).is(":checked");
+                $container.find(set).each(function () {
+                    if (checked) {
+                        $(this).attr("checked", "checked");
+                    } else {
+                        $(this).removeAttr('checked');
+                    }
+                });
+                $.uniform.update(set);
+            });
+        }
 
         // 选中行
         var $body = $container.find('tbody');
@@ -176,9 +181,15 @@ MU.ui.DataTable = function($container, $toolbar) {
             initComplete();
         }
         console.log('init end');
-    }).on('preXhr.dt', function (e, settings, data ) {
-        $.extend(data, option.ajax.data);
-    } );
+    }).on('preXhr.dt', function (e, settings, data ) { // 发送ajax请求前
+        if(data && option.ajax && option.ajax.data) {
+            $.extend(data, option.ajax.data);
+        }
+    }).on('xhr.dt', function(e, settings, json) { // ajax请求完成后
+        if(onDataEnd) {
+            onDataEnd(json.data);
+        }
+    });
 
     this.showPaginate = function(isShow) {
         option.paginate = isShow;
@@ -193,6 +204,9 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     this.setUrl = function(url, params) {
+        if(!option.ajax) {
+            option.ajax = {url: '', type: 'POST', data: {}};
+        }
         option.ajax.url = url;
         option.ajax.data = params;
     };
@@ -247,13 +261,13 @@ MU.ui.DataTable = function($container, $toolbar) {
         }
     };
 
-    this.applyOption = function() {
+    this.applyOption = function(settings) {
         if(dt) {
             dt.destroy();
             // 清空列
             $container.empty();
         }
-        dt = $container.DataTable($.extend({}, option));
+        dt = $container.DataTable($.extend(option, settings));
         // ====== 安装扩展
         // 列可拖动
 
@@ -350,6 +364,32 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     /**
+     * 获得选中行的主键值
+     *
+     * @returns {*}
+     */
+    this.getSelectedPkColValue = function() {
+        var selectedRows = this.getSelectedRow();
+        if(selectedRows.length == 0) {
+            return null;
+        }
+        return getPkColValue(selectedRows[0]);
+    };
+
+    function getPkColValue(rowData) {
+        var str = '';
+        var cols = self.getPkColOptions();
+        for(var i = 0; i < cols.length; i++) {
+            var col = cols[i];
+            str += rowData[col.data];
+            if(i < cols.length - 1) {
+                str +=  ',';
+            }
+        }
+        return str;
+    }
+
+    /**
      * 获得主键列信息
      *
      * @return Array
@@ -362,6 +402,75 @@ MU.ui.DataTable = function($container, $toolbar) {
             }
         }
         return columns;
+    };
+
+    /**
+     * 设置追踪数据变化历史
+     */
+    this.setTraceDataChange = function() {
+        var selectedData = this.getSelectedRow();
+        if(selectedData.length == 0) {
+            MU.ui.Message.alert('请选择数据！');
+            return false;
+        }
+
+        var pkValue = this.getSelectedPkColValue();
+        if(MU.UString.isEmpty(pkValue)) {
+            MU.ui.Message.alert('没有主键值！');
+            return false;
+        }
+
+        putHistory(selectedData[0], true);
+
+        onDataEnd = function(data) {
+            for(var i = 0; i < data.length; i++) {
+                if(pkValue == getPkColValue(data[i])) {
+                    console.log(data[i]);
+                    putHistory(data[i]);
+                    return;
+                }
+            }
+        };
+
+        function putHistory(rowData, isInit) {
+            var histories = MU.LocalStorage.get('dbChangeHistory', true);
+            if(!histories) {
+                histories = {};
+                histories[pkValue] = [rowData];
+            } else if(!histories[pkValue]) {
+                histories[pkValue] = [rowData];
+            } else if(isInit && histories[pkValue].length > 1) {
+                return;
+            } else {
+                var data = histories[pkValue];
+                var lastRowData = data[data.length - 1];
+                var isEqual = true;
+                for(var key in lastRowData) {
+                    if(lastRowData.hasOwnProperty(key)) {
+                        if(lastRowData[key] != rowData[key]) {
+                            isEqual = false;
+                            break;
+                        }
+                    }
+                }
+                if(!isEqual) {
+                    data.push(rowData);
+                }
+            }
+
+            MU.LocalStorage.put('dbChangeHistory', histories, true);
+        }
+
+        return true;
+    };
+
+    this.getTraceDataChange = function() {
+        var pkValue = this.getSelectedPkColValue();
+        var obj = MU.LocalStorage.get('dbChangeHistory', true);
+        if(obj) {
+            return obj[pkValue];
+        }
+        return [];
     };
 
     /**
@@ -1064,7 +1173,7 @@ MU.LocalStorage = {
     },
     get: function(key, isObj) {
         var result = window.localStorage.getItem(key);
-        if(isObj) {
+        if(isObj && result) {
             return JSON.parse(result);
         }
         return result;
