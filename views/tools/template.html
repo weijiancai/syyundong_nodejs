@@ -51,3 +51,32 @@ public class {{tableCnName}}RDS extends RemoteDataStore {
     <li class="{{if (i == 0)}}active{{/if}}"><a href="#">{{value}}</a></li>
     {{/each}}
 </script>
+
+<!-- 数据追踪 -->
+<script type="text/template" id="tpl_dbTrace">
+    <!--<div class="flex">
+        <select id="dbDataSourceSelect">
+            <option>数据源</option>
+        </select>
+        <select id="dbSchemaSelect">
+            <option>Schema</option>
+        </select>
+        <select id="dbTableSelect">
+            <option>表、视图</option>
+        </select>
+        <select id="dbColumnSelect">
+            <option>列</option>
+        </select>
+        <a id="btnDbAddTrace" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>
+    </div>-->
+
+    <div style="height: 330px;overflow: auto">
+        <ul class="nav nav-tabs">
+            <li class=""><a id="btnDbAddTrace"><span class="glyphicon glyphicon-plus"></span></a></li>
+        </ul>
+
+        <div class="tab-content" style="height: 330px;">
+
+        </div>
+    </div>
+</script>

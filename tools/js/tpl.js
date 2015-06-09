@@ -7,6 +7,7 @@ Tools.tpl = {
             {data: 'desc', title: '描述'}
         ]);
         tplTable.setUrl('/tools/tplBrowser');
+        tplTable.applyOption();
         tplTable.query();
 
         var cmHtml = CodeMirror.fromTextArea($('#tplHtmlContent').get(0), {
@@ -55,10 +56,10 @@ Tools.tpl = {
         // 编辑模板
         $('#btnEditTpl').click(function() {
             var selectedRow = tplTable.getSelectedRow();
-            if(selectedRow) {
+            if(selectedRow.length > 0) {
                 $('#tplTables').hide();
                 $('#tplEdit').show();
-                $.post('/tools/tplGet', {name: selectedRow.name}, function(data) {
+                $.post('/tools/tplGet', {name: selectedRow[0].name}, function(data) {
                     if(data) {
                         cmHtml.setValue(data.html);
                         cmCss.setValue(data.css);

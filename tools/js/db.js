@@ -99,7 +99,6 @@ Tools.DB = function() {
         // 获得数据库收藏
         $.post('/tools/dbGetFavorites', function(data) {
             $dbFavoritesList.append(template('tpl_dbFavoritesList', {list: data}));
-
         });
 
         var cmSql = CodeMirror.fromTextArea($('#dbSqlConsole').get(0), {
@@ -162,10 +161,17 @@ Tools.DB = function() {
                 return;
             }
 
+            var dbId = nodes[0].id;
             if($this.hasClass('favorites')) {
-                var dbId = nodes[0].id;
                 $.post('/tools/dbAddFavorites', {dbId: dbId}, function() {
                     $dbFavoritesList.append('<li><a href="#">' + dbId +'</a></li>');
+                });
+            } else if($this.hasClass('copyDdl')) {
+                $.post('/tools/dbCopyDdl', {dbId: dbId}, function(data) {
+                    dialog({
+                        title: dbId,
+                        content: '<textarea class="form-control" style="width: 100%;height: 100%;">' + data + '</textarea>'
+                    }).show();
                 });
             }
         });
@@ -227,18 +233,18 @@ Tools.DB = function() {
         $ul.find('li').removeClass('active');
         var isHave;
         $ul.find('a').each(function() {
-            if($(this).text() == tableName) {
+            if($(this).text() == id) {
                 isHave = true;
             }
         });
         if(isHave) {
             return;
         }
-        $ul.append('<li class="active"><a href="#table_' + tableName + '" data-toggle="tab">' + tableName + '</a></li>');
+        $ul.append('<li class="active"><a href="#table_' + id + '" data-toggle="tab">' + id + '</a></li>');
 
         var $panel = $tabs.find('div.tab-content');
         $panel.find('> div').removeClass('active');
-        var $newPanel = $('<div class="tab-pane active" id="table_' + tableName + '"></div>');
+        var $newPanel = $('<div class="tab-pane active" id="table_' + id + '"></div>');
         $newPanel.append();
         $panel.append($newPanel);
 
@@ -261,12 +267,15 @@ Tools.DB = function() {
                             var $content = this._$('content');
                             var traces = [];
 
-                            $content.find('table tbody tr').each(function() {
+                            var $a = $content.find('ul li.active a');
+                            var title = $a.text();
+                            var tab_id = $a.attr('href');
+                            $content.find(tab_id).find('table tbody tr').each(function() {
                                 var parent = $(this).find('td:eq(0) input').val();
                                 var child = $(this).find('td:eq(1) input').val();
                                 traces.push({parentCol: parent, childCol: child});
                             });
-                            $.post('/tools/dbSaveTrace', {table: id, traces: JSON.stringify(traces)}, function() {
+                            $.post('/tools/dbSaveTrace', {table: id, title: title, traces: JSON.stringify(traces)}, function() {
                                 MU.ui.Message.alert('保存成功！');
                             });
 
@@ -276,23 +285,58 @@ Tools.DB = function() {
                     {
                         value: '追踪',
                         callback: function() {
-                            window.open('/tools/dbTrace?table=' + id + '&data=' + JSON.stringify(selectedData));
+                            var $content = this._$('content');
+                            window.open('/tools/dbTrace?table=' + id + '&title=' + $content.find('ul li.active a').text() + '&data=' + JSON.stringify(selectedData));
                         }
                     }
                 ],
                 onshow: function() {
                     var $content = this._$('content');
-                    var $tbody = $content.find('tbody');
+                    var fkData = [];
 
-                    function appendRow(value1, value2) {
+                    // 添加tab页
+                    function addTab(name, data) {
+                        if(name == '未命名') return;
+
+                        var $ul = $content.find('ul');
+                        $ul.find('li').removeClass('active');
+                        $ul.prepend('<li class="active"><a href="#tab_trace_' + name + '" data-toggle="tab">' + name + '</a></li>');
+
+                        var $tabs = $content.find('.tab-content');
+                        $tabs.find('> div').removeClass('active');
+                        var tabStr = '<div class="tab-pane active" id="tab_trace_' + name + '">' +
+                            '    <table style="width: 100%;" id="dbTraceTable">' +
+                            '        <thead>' +
+                            '        <tr>' +
+                            '            <th>父表列</th>' +
+                            '            <th>子表列</th>' +
+                            '        </tr>' +
+                            '        </thead>' +
+                            '        <tbody></tbody>' +
+                            '    </table>' +
+                            '</div>';
+                        var $tab = $tabs.prepend(tabStr);
+                        var $tbody = $tab.find('tbody');
+
+
+                        if(!data) {
+                            data = fkData;
+                        }
+
+                        for(var i = 0; i < data.length; i++) {
+                            appendRow($tbody, data[i]['parentCol'], data[i]['childCol']);
+                        }
+                    }
+
+                    function appendRow($tbody, value1, value2) {
                         var tr = $('<tr></tr>').appendTo($tbody);
                         var td1 = $('<td></td>').appendTo(tr);
                         var td2 = $('<td></td>').appendTo(tr);
                         var td3 = $('<td class="width:4%"></td>').appendTo(tr);
-                        var plus = $('<a class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></a>').appendTo(td3);
+                        var plus = $('<a><span class="glyphicon glyphicon-plus"></span></a>').appendTo(td3);
 
                         plus.click(function() {
-                            appendRow();
+                            appendRow($tbody);
                         });
 
                         var tree1 = new MU.ui.ComboTree(td1, dbOption);
@@ -305,13 +349,34 @@ Tools.DB = function() {
                         tree2.setValue(value2);
                     }
 
+                    // 增加
+                    $content.find('#btnDbAddTrace').click(function() {
+                        dialog({
+                            title: '设置名称',
+                            content: '<input type="text" class="form-control" value="未命名">',
+                            button: [
+                                {
+                                    value: '保存',
+                                    callback: function() {
+                                        var subContent = this._$('content');
+                                        var name = subContent.find('input').val();
+                                        addTab(name);
+                                    }
+                                }
+                            ]
+                        }).show();
+                    });
+
                     $.post('/tools/dbGetFkRefCol', {table: id}, function(data) {
-                        if(data && data.length > 0) {
-                            for(var i = 0; i < data.length; i++) {
-                                appendRow(data[i]['parentCol'], data[i]['childCol']);
+                        if(data) {
+                            for(var key in data) {
+                                if(data.hasOwnProperty(key)) {
+                                    if(key == '未命名') {
+                                        fkData = data[key];
+                                    }
+                                    addTab(key, data[key]);
+                                }
                             }
-                        } else {
-                            appendRow();
                         }
                     });
                 }
@@ -403,7 +468,7 @@ Tools.DB = function() {
         });
 
         var dt = crud.dataTable();
-        dt.setHeight(600);
+        dt.setHeight(400);
         dt.setColumns($.extend([], columns));
         dt.setUrl('/tools/dbRetrieve?id=' + id + '&pk=' + (pk ? pk : ''));
         dt.setEditable(true, '/tools/dbEditTable', {table: id});

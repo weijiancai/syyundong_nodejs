@@ -449,6 +449,21 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     /**
+     * 获得主键列名
+     */
+    this.getPkColNames = function() {
+        var cols = this.getPkColOptions();
+        var str = '';
+        for(var i = 0; i < cols.length; i++) {
+            str += cols[i].data;
+            if(i < cols.length - 1) {
+                str += ',';
+            }
+        }
+        return str;
+    };
+
+    /**
      * 设置追踪数据变化历史
      */
     this.setTraceDataChange = function() {
@@ -1134,7 +1149,7 @@ MU.ui.ComboTree = function($container, options) {
         '</div>').appendTo($container);
 
     var $input = $tpl.find('input');
-    var $ul = $tpl.find('ul').attr('id', MU.GUID());
+    var $ul = $tpl.find('ul').attr('id', MU.GUID()).css({zIndex: 9999});
     var treeNodeAttrName = 'name';
     var self = this;
 

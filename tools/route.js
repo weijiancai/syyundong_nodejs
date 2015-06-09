@@ -251,7 +251,7 @@ router.post('/dbGetFkRefCol', function(req, res, next) {
             }
         }
 
-        res.send(result);
+        res.send({'未命名': result});
     });
 });
 // 获得数据库收藏
@@ -268,27 +268,30 @@ router.post('/dbAddFavorites', function(req, res, next) {
 router.post('/dbSaveTrace', function(req, res, next) {
     var table = req.body.table;
     var traces = req.body.traces;
-    config.addDbTrace(table, JSON.parse(traces));
+    var title = req.body.title;
+    config.addDbTrace(table, title, JSON.parse(traces));
     res.send();
 });
 // 数据追踪
 router.get('/dbTrace', function(req, res, next) {
     var table = req.query.table;
     var data = JSON.parse(req.query.data);
+    var title = req.query.title;
     var result = [];
-    result.push({table: table, data: data});
-    var traces = config.getDbTrace(table);
+    //result.push({table: table, data: data});
+    var traces = config.getDbTrace(table)[title];
     if(!traces || traces.length == 0) {
         res.send('<h2>请配置数据跟踪！</h2>');
         return;
     }
+    traces.unshift({parentCol: traces[1].parentCol, childCol: traces[1].parentCol});
 
     function getTableName(parentCol) {
         return parentCol.substr(0, parentCol.lastIndexOf('.'));
     }
 
     var dataCache = {};
-    dataCache[getTableName(traces[0].parentCol)] = data;
+    dataCache[getTableName(traces[1].parentCol)] = data;
 
     function iterator(parentCol, childCol, i) {
         var strs = childCol.split('.');
@@ -336,6 +339,13 @@ router.get('/dbTrace', function(req, res, next) {
     }
 
     iterator(traces[0].parentCol, traces[0].childCol, 0);
+});
+// 赋值DDL
+router.post('/dbCopyDdl', function(req, res, next) {
+    var dbId = req.body.dbId;
+    db.copyDdl(dbId, function(data) {
+        res.send(data);
+    })
 });
 
 router.get('/getWebPage', function(req, res, next) {
@@ -540,11 +550,7 @@ router.post('/tplBrowser', function(req, res) {
         }
     }
 
-    res.send(tplConfig);
-    /*var files = fs.readdirSync(tplDir);
-    for(file in files) {
-        var fileName =
-    }*/
+    res.send({recordsTotal: tplConfig.length,recordsFiltered: tplConfig.length, data:tplConfig});
 });
 
 // 保存模板

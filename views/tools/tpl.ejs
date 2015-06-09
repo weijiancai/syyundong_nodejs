@@ -1,58 +1,63 @@
-<div id="tplTables">
-    <div>
-        <button id="btnAddTpl" type="button" class="btn btn-primary">增加</button>
-        <button id="btnEditTpl" type="button" class="btn btn-primary">编辑</button>
-    </div>
-    <table id="tplTable"></table>
-</div>
+<div class="panel panel-default" style="min-height: 700px">
+    <div class="panel-heading">模板</div>
+    <div class="panel-body">
+        <div id="tplTables">
+            <div>
+                <button id="btnAddTpl" type="button" class="btn btn-primary">增加</button>
+                <button id="btnEditTpl" type="button" class="btn btn-primary">编辑</button>
+            </div>
+            <table id="tplTable"></table>
+        </div>
 
 
-<div id="tplEdit" style="display: none;">
-    <button id="btnSaveTpl" type="button" class="btn btn-primary">保存</button>
-    <button id="btnTplBack" type="button" class="btn btn-primary">返回</button>
-    <button id="btnTplGen" type="button" class="btn btn-primary">生成</button>
-    <div style="padding: 5px;">
-        <label>依赖：</label>
-        <label>jquery-2.1.3: <input type="checkbox" value="" id="depJquery2_1_3"></label>
-        <label>JqMobi 2.2: <input type="checkbox" value="" id="depJqmobi2_2"></label>
-        <label>bootstrap 3.3.4: <input type="checkbox" value="" id="depBootstrap3_3_4"></label>
-    </div>
-    <!-- 预览 -->
-    <div>
-        <ul class="nav nav-tabs">
-            <li class="active"><a data-toggle="tab" href="#tab_tplPreview" aria-expanded="true">预览</a></li>
-            <li class=""><a data-toggle="tab" href="#tab_tplSourceCode" aria-expanded="false">源代码</a></li>
-        </ul>
-        <div class="tab-content">
-            <div id="tab_tplPreview" class="tab-pane active">
-                <iframe id="tplPreview" style="height: 400px;width: 100%;padding: 10px;"></iframe>
+        <div id="tplEdit" style="display: none;">
+            <button id="btnSaveTpl" type="button" class="btn btn-primary">保存</button>
+            <button id="btnTplBack" type="button" class="btn btn-primary">返回</button>
+            <button id="btnTplGen" type="button" class="btn btn-primary">生成</button>
+            <div style="padding: 5px;">
+                <label>依赖：</label>
+                <label>jquery-2.1.3: <input type="checkbox" value="" id="depJquery2_1_3"></label>
+                <label>JqMobi 2.2: <input type="checkbox" value="" id="depJqmobi2_2"></label>
+                <label>bootstrap 3.3.4: <input type="checkbox" value="" id="depBootstrap3_3_4"></label>
+            </div>
+            <!-- 预览 -->
+            <div>
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" href="#tab_tplPreview" aria-expanded="true">预览</a></li>
+                    <li class=""><a data-toggle="tab" href="#tab_tplSourceCode" aria-expanded="false">源代码</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="tab_tplPreview" class="tab-pane active">
+                        <iframe id="tplPreview" style="height: 400px;width: 100%;padding: 10px;"></iframe>
+                    </div>
+
+                    <div id="tab_tplSourceCode" class="tab-pane">
+                        <textarea id="tplSourceCode" class="form-control" style="height: 400px;"></textarea>
+                    </div>
+                </div>
             </div>
 
-            <div id="tab_tplSourceCode" class="tab-pane">
-                <textarea id="tplSourceCode" class="form-control" style="height: 400px;"></textarea>
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#tpl_html" data-toggle="tab">HTML</a></li>
+                <li><a href="#tpl_css" data-toggle="tab">CSS</a></li>
+                <li><a href="#tpl_javascript" data-toggle="tab">JavaScript</a></li>
+                <li><a href="#tpl_data" data-toggle="tab">数据</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane active" id="tpl_html">
+                    <textarea id="tplHtmlContent" class="form-control" style="height: 400px;"></textarea>
+                </div>
+                <div class="tab-pane" id="tpl_css">
+                    <textarea id="tplCssContent" class="form-control" style="height: 400px;"></textarea>
+                </div>
+                <div class="tab-pane" id="tpl_javascript">
+                    <textarea id="tplJavascriptContent" class="form-control" style="height: 400px;"></textarea>
+                </div>
+                <div class="tab-pane" id="tpl_data">
+                    <textarea id="tplDataContent" class="form-control" style="height: 400px;"></textarea>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#tpl_html" data-toggle="tab">HTML</a></li>
-        <li><a href="#tpl_css" data-toggle="tab">CSS</a></li>
-        <li><a href="#tpl_javascript" data-toggle="tab">JavaScript</a></li>
-        <li><a href="#tpl_data" data-toggle="tab">数据</a></li>
-    </ul>
-
-    <div class="tab-content">
-        <div class="tab-pane active" id="tpl_html">
-            <textarea id="tplHtmlContent" class="form-control" style="height: 400px;"></textarea>
-        </div>
-        <div class="tab-pane" id="tpl_css">
-            <textarea id="tplCssContent" class="form-control" style="height: 400px;"></textarea>
-        </div>
-        <div class="tab-pane" id="tpl_javascript">
-            <textarea id="tplJavascriptContent" class="form-control" style="height: 400px;"></textarea>
-        </div>
-        <div class="tab-pane" id="tpl_data">
-            <textarea id="tplDataContent" class="form-control" style="height: 400px;"></textarea>
         </div>
     </div>
 </div>
