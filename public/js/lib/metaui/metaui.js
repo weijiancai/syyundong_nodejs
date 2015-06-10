@@ -47,11 +47,14 @@ MU.ui.DataTable = function($container, $toolbar) {
     var editable; // 是否可编辑，默认否
     var editUrl; // 可编辑url
     var editParams; // 可编辑参数
+    var editCallback; // 可编辑回调函数
     var deleteUrl; // 删除行url
     var deleteParams; // 删除行参数
+    var metaId;
 
     // 回掉函数
-    var onDataEnd; // 数据准备好后，回掉
+    var onDataEnd; // 数据准备好后，回调
+    var onColumnEnd; // 列信息准备好后，回调
 
     var option = {
         "searching": false,
@@ -68,8 +71,9 @@ MU.ui.DataTable = function($container, $toolbar) {
         "destroy": true,
         "dom": 'Rlfrtip', // 列可拖动
         stateSave: true, // 保存列拖动后的设置
+        "orderFixed": [ 0, 'asc' ], // 第一列固定排序
         "initComplete": function(setting) {
-
+            console.log('initComplete......');
         }
     };
 
@@ -137,6 +141,7 @@ MU.ui.DataTable = function($container, $toolbar) {
             $body.on('click', 'td', function(e) {
                 var cell = dt.cell(this);
                 var index = cell.index();
+                var row = dt.row(index.row);
                 var orders = dt.colReorder.order();
                 var curColumn = option.columns[orders[index.column]];
                 // 不可编辑
@@ -155,7 +160,6 @@ MU.ui.DataTable = function($container, $toolbar) {
                     }
                 }
 
-
                 var params = {pks: pks.join(','), pkValues: pkValues.join(','), column: curColumn.data};
                 var $editable = $(this).find('> div');
                 if(curColumn.isFk) {
@@ -166,11 +170,18 @@ MU.ui.DataTable = function($container, $toolbar) {
                     submitdata: $.extend(params, editParams || {}),
                     callback: function(value, settings) {
                         cell.data(value);
+                        if(editCallback) {
+                            editCallback(params.column, value, row.data().sourceColNum);
+                        }
                         return false;
                     }
                 };
                 if(curColumn.dataType == 'datetime') {
                     settings.type = 'datetimepicker';
+                }
+                if(!MU.UString.isEmpty(curColumn.dict)) {
+                    settings.type = 'select';
+                    settings.data = MU.Dict.getCode(curColumn.dict);
                 }
                 $editable.editable(editUrl, settings);
             });
@@ -233,32 +244,67 @@ MU.ui.DataTable = function($container, $toolbar) {
      * @param flag
      * @param url
      * @param params
+     * @param callback
      */
-    this.setEditable = function(flag, url, params) {
+    this.setEditable = function(flag, url, params, callback) {
         editable = flag;
         editUrl = url;
         editParams = params;
+        editCallback = callback;
     };
 
     this.setColumns = function(columns) {
+        // 序号列
         columns.unshift({
-            "render": function ( data, type, row ) {
-                var check = data ? 'checked="checked"' : '';
-                return '<input type="checkbox" class="checkboxes" ' + check + '/>';
+            "render": function ( data, type, row, meta) {
+                return '<div>' + (meta.row + 1) + '</div>';
             },
-            data: '_checked_',
-            title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
+            data: '_orderNum_',
+            title: '',
             orderable: false,
             editable: false, // 不可编辑
             //width: 1,
-            className: 'sorting_disabled'
+            className: 'rowNumber'
             //type: 'string'
             //orderSequence: []
         });
+        // checkbox列
+        if(isMultiSelect) {
+            columns.unshift({
+                "render": function ( data, type, row ) {
+                    var check = data ? 'checked="checked"' : '';
+                    return '<input type="checkbox" class="checkboxes" ' + check + '/>';
+                },
+                data: '_checked_',
+                title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
+                orderable: false,
+                editable: false, // 不可编辑
+                //width: 1,
+                className: 'sorting_disabled'
+                //type: 'string'
+                //orderSequence: []
+            });
+        }
         option.columns = columns;
         if(columns.length > 0) {
             option.scrollX = true;
+            for(var i = 1; i < columns.length; i++) {
+                columns[i].render = (function(currentCol) {
+                    return function(data) {
+                        if(!MU.UString.isEmpty(currentCol.dict)) {
+                            var clazz = currentCol.dict + ' ' + currentCol.dict + '_' + data;
+                            return '<div class="' + clazz + '">' + MU.Dict.getCode(currentCol.dict)[data] + '</div>';
+                        }
+
+                        return '<div>' + data + '</div>';
+                    }
+                })(columns[i]);
+            }
         }
+    };
+
+    this.setMetaId = function(id) {
+        metaId = id;
     };
 
     this.applyOption = function(settings) {
@@ -267,7 +313,30 @@ MU.ui.DataTable = function($container, $toolbar) {
             // 清空列
             $container.empty();
         }
+        // 获得列
+        if(option.columns.length == 0 && metaId) {
+            $.get('/meta', {id: metaId}, function(data) {
+                for(var i = 0; i < data.length; i++) {
+                    var obj = data[i];
+                    obj.data = obj.name;
+                    obj.title = obj.displayName;
+                    obj.defaultContent = '';
+                }
+                self.setColumns(data);
+                createDataTable(settings);
+            });
+        } else {
+            createDataTable(settings);
+        }
+    };
+
+    function createDataTable(settings) {
         dt = $container.DataTable($.extend(option, settings));
+        // 列信息完成回调
+        if(onColumnEnd) {
+            onColumnEnd();
+        }
+
         // ====== 安装扩展
         // 列可拖动
 
@@ -286,28 +355,29 @@ MU.ui.DataTable = function($container, $toolbar) {
 
             // 列信息
             var btnColSetting = $('<button type="button" class="btn btn-primary pull-right">列信息</button>').appendTo($toolbar);
-            btnColSetting.one('click', function() {
+            btnColSetting.on('click', function() {
                 var cols = [
-                    {data: 'name', title: '名称', className: 'varchar'},
-                    {data: 'displayName', title: '显示名', className: 'varchar'},
-                    {data: 'dataType', title: '数据类型'},
-                    {data: 'width', title: '宽', editable: true},
-                    {data: 'isDisplay', title: '是否显示', editable: true},
-                    {data: 'isPk', title: '主键'},
-                    {data: 'isFk', title: '外键'},
-                    {data: 'displayStyle', title: '显示风格', editable: true},
-                    {data: 'dict', title: '数据字典', editable: true},
-                    {data: 'align', title: '对齐', editable: true},
-                    {data: 'sortNum', title: '排序号', editable: true}
+                    {data: 'name', title: '名称', className: 'varchar', isPk: true},
+                    {data: 'displayName', title: '显示名', className: 'varchar', editable: true, defaultContent: ''},
+                    {data: 'dataType', title: '数据类型', defaultContent: '', width: 60},
+                    {data: 'width', title: '宽', editable: true, defaultContent: 0},
+                    {data: 'isDisplay', title: '是否显示', editable: true, defaultContent: true, width: 60, dict: 'Boolean'},
+                    {data: 'isPk', title: '主键', width: 40, dict: 'Boolean'},
+                    {data: 'isFk', title: '外键', width: 40, dict: 'Boolean'},
+                    {data: 'displayStyle', title: '显示风格', editable: true, defaultContent: MU.C_DS_TEXT, width: 60, dict: 'DisplayStyle'},
+                    {data: 'dict', title: '数据字典', editable: true, defaultContent: '', dict: 'DictList'},
+                    {data: 'align', title: '对齐', editable: true, defaultContent: 'left', width: 60, dict: 'Align'},
+                    {data: 'sortNum', title: '排序号', editable: true, width: 50}
                 ];
-                cols[0].render = cols[1].render = function(data) {
-                    return '<div>' + (data ? data : '') + '</div>';
-                };
+                /*cols[0].render = cols[1].render = cols[2].render = cols[3].render = cols[4].render = cols[5].render = cols[6].render = cols[7].render = cols[8].render = cols[9].render = cols[10].render = function(data) {
+                    return '<div>' + data + '</div>';
+                };*/
 
                 var data = [];
-                for(var i = 1; i < option.columns.length; i++) {
-                    var col = option.columns[i];
-                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, sortNum: i};
+                var orders = dt.colReorder.order();
+                for(var i = 1; i < orders.length; i++) {
+                    var col = option.columns[orders[i]];
+                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, width: col.width, align: col.align, displayStyle: col.displayStyle, dict: col.dict, sortNum: (i + 1) * 10, sourceColNum: i};
                     data.push(obj);
                 }
 
@@ -319,16 +389,24 @@ MU.ui.DataTable = function($container, $toolbar) {
                         var dataTable = new MU.ui.DataTable($content.find('table'));
                         dataTable.setColumns(cols);
                         dataTable.setHeight(300);
+                        dataTable.setEditable(true, '/meta/edit', {id: metaId}, function(colName, value, sourceColNum) {
+                            var dtColumn = dt.column(sourceColNum);
+                            if(colName == 'displayName') { // 更新显示名
+                                $(dtColumn.header()).html(value);
+                            }
+                        });
                         dataTable.applyOption({
                             data: data,
                             serverSide: false,
-                            paginate: false
+                            paginate: false,
+                            searching: true,
+                            autoWidth: false
                         });
                     }
-                }).width(1200).show();
+                }).width(1200).height(400).show();
             });
         }
-    };
+    }
 
     this.loadData = function(data) {
         dt.clear();
@@ -546,6 +624,10 @@ MU.ui.DataTable = function($container, $toolbar) {
 
     this.onLoadDataEnd = function(callback) {
         loadDataEnd = callback;
+    };
+
+    this.onColumnEnd = function(callback) {
+        onColumnEnd = callback;
     }
 };
 
@@ -1095,6 +1177,10 @@ MU.ui.DataCrud = function($container) {
     queryForm.colCount = 3;
     queryForm.formType = MU.C_FT_QUERY;
 
+    dt.onColumnEnd(function() {
+        queryForm.genByDataTable(dt);
+    });
+
     // 查询
     var $btnQuery = $('<button type="button" class="btn btn-primary">查询</button>').appendTo($buttons);
     $btnQuery.click(function() {
@@ -1250,6 +1336,9 @@ MU.UString = {
         return !(str && $.trim(str).length > 0);
     },
     replaceAll: function(str, source, target) {
+        if(source == '.') {
+            source = '\\' + source;
+        }
         return str.replace(new RegExp(source, 'g'), target);
     },
     // 转换成驼峰字符串
@@ -1292,5 +1381,11 @@ MU.GUID = function () {
         + S4() + S4() + S4());
     } else {
         return (S4() + S4() + S4() + S4() + S4() + S4() + S4() + S4());
+    }
+};
+
+MU.Dict = {
+    getCode: function(dictId) {
+        return DICT[dictId].code;
     }
 };

@@ -222,6 +222,7 @@ Tools.DB = function() {
             }
             if(obj.isPk) {
                 pk = obj.data;
+                obj.editable = false;
             }
             obj.defaultContent = '';
             columns.push(obj);
@@ -240,11 +241,11 @@ Tools.DB = function() {
         if(isHave) {
             return;
         }
-        $ul.append('<li class="active"><a href="#table_' + id + '" data-toggle="tab">' + id + '</a></li>');
+        $ul.append('<li class="active"><a href="#table_' + MU.UString.replaceAll(id, '.', '') + '" data-toggle="tab">' + id + '</a></li>');
 
         var $panel = $tabs.find('div.tab-content');
         $panel.find('> div').removeClass('active');
-        var $newPanel = $('<div class="tab-pane active" id="table_' + id + '"></div>');
+        var $newPanel = $('<div class="tab-pane active" id="table_' + MU.UString.replaceAll(id, '.', '') + '"></div>');
         $newPanel.append();
         $panel.append($newPanel);
 
@@ -467,17 +468,15 @@ Tools.DB = function() {
             }).width(950).height(500).show();
         });
 
+        // 初始化表格
         var dt = crud.dataTable();
         dt.setHeight(400);
-        dt.setColumns($.extend([], columns));
+        //dt.setColumns($.extend([], columns));
+        dt.setMetaId(id);
         dt.setUrl('/tools/dbRetrieve?id=' + id + '&pk=' + (pk ? pk : ''));
         dt.setEditable(true, '/tools/dbEditTable', {table: id});
         dt.setDeleteUrl('/tools/dbDeleteTableRow', {table: id});
         dt.applyOption();
-
-        // 初始化表单
-        var queryForm = crud.queryForm();
-        queryForm.genByDataTable(dt);
     };
 
     this.editDataSource = function(node) {
