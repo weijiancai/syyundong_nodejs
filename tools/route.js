@@ -279,7 +279,6 @@ router.get('/dbTrace', function(req, res, next) {
     var title = req.query.title;
     var pkColName = req.query.pkColName;
     var result = [];
-    //result.push({table: table, data: data});
     var traces = config.getDbTrace(table)[title];
     if(!traces || traces.length == 0) {
         res.send('<h2>请配置数据跟踪！</h2>');
@@ -289,67 +288,72 @@ router.get('/dbTrace', function(req, res, next) {
         res.send('<h2>请设置主键列！</h2>');
         return;
     }
-    traces.unshift({parentCol: traces[1].parentCol, childCol: traces[1].parentCol});
 
     db.setDataSource(table);
     var mainBuild = sqlBuilder.create().from(table.split('.')[2]);
     var array = pkColName.split(',');
-    for(var i = 0; i )
-    db.query()
-
-    function getTableName(parentCol) {
-        return parentCol.substr(0, parentCol.lastIndexOf('.'));
+    for(var i = 0; i < array.length; i++) {
+        mainBuild.and(array[i], data[0][array[i]]);
     }
+    db.query(mainBuild.build(), function(data) {
+        result.push({table: table, data: data});
 
-    var dataCache = {};
-    dataCache[getTableName(traces[1].parentCol)] = data;
-
-    function iterator(parentCol, childCol, i) {
-        var strs = childCol.split('.');
-        var datasource = strs[0];
-        var schema = strs[1];
-        var tableName = strs[2];
-        var colName = strs[3];
-
-        var array = [];
-        var data = dataCache[getTableName(parentCol)];
-        for(var j = 0; j < data.length; j++) {
-            array.push(data[j][parentCol.split('.')[3]]);
+        function getTableName(parentCol) {
+            return parentCol.substr(0, parentCol.lastIndexOf('.'));
         }
 
-        // 下一个
-        function next(data) {
-            result.push({table: datasource + '.' + schema + '.' + tableName, data: data});
-            if(i == traces.length - 1) {
-                res.render('tools/db_trace', {result: result});
-            } else {
-                i++;
-                dataCache[getTableName(traces[i].parentCol)] = data.concat(dataCache[getTableName(traces[i].parentCol)] || []);
-                iterator(traces[i].parentCol, traces[i].childCol, i);
+        var dataCache = {};
+        dataCache[getTableName(traces[1].parentCol)] = data;
+
+        function iterator(parentCol, childCol, i) {
+            var strs = childCol.split('.');
+            var datasource = strs[0];
+            var schema = strs[1];
+            var tableName = strs[2];
+            var colName = strs[3];
+
+            var array = [];
+            var data = dataCache[getTableName(parentCol)];
+            for(var j = 0; j < data.length; j++) {
+                array.push(data[j][parentCol.split('.')[3]]);
             }
+
+            // 下一个
+            function next(data) {
+                result.push({table: datasource + '.' + schema + '.' + tableName, data: data});
+                if(i == traces.length - 1) {
+                    res.render('tools/db_trace', {result: result});
+                } else {
+                    i++;
+                    dataCache[getTableName(traces[i].parentCol)] = data.concat(dataCache[getTableName(traces[i].parentCol)] || []);
+                    iterator(traces[i].parentCol, traces[i].childCol, i);
+                }
+            }
+
+            if(array.length == 0) {
+                next([]);
+                return;
+            }
+
+            var ds =config.getDataSource(datasource, schema);
+            db.setDataSource(ds);
+            var tName;
+            if(ds.dbType == 'sqlServer') {
+                tName = '[' + schema + '].dbo.' + tableName;
+            } else {
+                tName = schema + '.' + tableName;
+            }
+            var builder = sqlBuilder.create().query().from(tName);
+            builder.and(colName, array);
+            db.query(builder.build(), function(data) {
+                next(data);
+            });
         }
 
-        if(array.length == 0) {
-            next([]);
-            return;
-        }
+        iterator(traces[0].parentCol, traces[0].childCol, 0);
+    });
 
-        var ds =config.getDataSource(datasource, schema);
-        db.setDataSource(ds);
-        var tName;
-        if(ds.dbType == 'sqlServer') {
-            tName = '[' + schema + '].dbo.' + tableName;
-        } else {
-            tName = schema + '.' + tableName;
-        }
-        var builder = sqlBuilder.create().query().from(tName);
-        builder.and(colName, array);
-        db.query(builder.build(), function(data) {
-            next(data);
-        });
-    }
 
-    iterator(traces[0].parentCol, traces[0].childCol, 0);
 });
 // 赋值DDL
 router.post('/dbCopyDdl', function(req, res, next) {

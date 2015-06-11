@@ -142,6 +142,32 @@ table.dataTable tbody td {
     color: #333;
 }
 
+
+/* 数据字典 */
+.dataTable .Boolean {
+    text-align: center;
+}
+.dataTable .Boolean_true {
+    background-color: #2BA812;
+    color: #fff;
+}
+.dataTable .Boolean_false {
+    background-color: #f75505;
+    color: #fff;
+}
+/* 高亮 */
+.dataTable td.highlight, .dataTable td > div.highlight {
+    background-color: whitesmoke !important;
+}
+/* 可编辑控件 */
+.dataTable td input, td select {
+    color: #000;
+    width: 100%;
+    display: block;
+    overflow: hidden;
+    text-align: left;
+}
+
 .dataTables_filter input {
     height: 34px;
     padding: 6px 12px;
@@ -163,26 +189,4 @@ table.dataTable tbody td {
     outline: 0;
     -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, .6);
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, .6);
-}
-
-/* 数据字典 */
-.Boolean {
-    text-align: center;
-}
-.Boolean_true {
-    background-color: #2BA812;
-    color: #fff;
-}
-.Boolean_false {
-    background-color: #f75505;
-    color: #fff;
-}
-/* 高亮 */
-td.highlight, td > div.highlight {
-    background-color: whitesmoke !important;
-}
-/* 可编辑控件 */
-td input, td select {
-    color: #000;
-    margin: -2px -5px;
 }

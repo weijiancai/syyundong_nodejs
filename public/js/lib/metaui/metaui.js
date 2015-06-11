@@ -141,6 +141,8 @@ MU.ui.DataTable = function($container, $toolbar) {
             $body.on('click', 'td', function(e) {
                 var cell = dt.cell(this);
                 var index = cell.index();
+                if(!index) return;
+
                 var row = dt.row(index.row);
                 var orders = dt.colReorder.order();
                 var curColumn = option.columns[orders[index.column]];
@@ -174,6 +176,14 @@ MU.ui.DataTable = function($container, $toolbar) {
                             editCallback(params.column, value, row.data().sourceColNum);
                         }
                         return false;
+                    },
+                    onedit: function() {
+                        // 去掉padding
+                        $editable.css('padding', '0');
+                    },
+                    onreset: function() {
+                        // 恢复padding
+                        restorePadding();
                     }
                 };
                 if(curColumn.dataType == 'datetime') {
@@ -184,6 +194,11 @@ MU.ui.DataTable = function($container, $toolbar) {
                     settings.data = $.extend({'noSelectValue': ''}, MU.Dict.getCode(curColumn.dict));
                 }
                 $editable.editable(editUrl, settings);
+
+                // 恢复padding
+                function restorePadding() {
+                    $editable.css('padding', '2px 5px');
+                }
             });
         }
 
@@ -251,10 +266,6 @@ MU.ui.DataTable = function($container, $toolbar) {
         editUrl = url;
         editParams = params;
         editCallback = callback;
-        // 所有列可编辑
-        for(var i = 1; i < option.columns.length; i++) {
-            option.columns[i].editable = true;
-        }
     };
 
     this.setColumns = function(columns) {
@@ -306,6 +317,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                         if(currentCol.isHighlight) {
                             $div.addClass('highlight');
                         }
+                        $div.css('textAlign', currentCol.align);
 
                         $div.text(data);
 
@@ -350,6 +362,12 @@ MU.ui.DataTable = function($container, $toolbar) {
         if(onColumnEnd) {
             onColumnEnd();
         }
+        // 所有列可编辑
+        if(editable) {
+            for(var i = 1; i < option.columns.length; i++) {
+                option.columns[i].editable = true;
+            }
+        }
 
         // ====== 安装扩展
         // 列可拖动
@@ -371,17 +389,17 @@ MU.ui.DataTable = function($container, $toolbar) {
             var btnColSetting = $('<button type="button" class="btn btn-primary pull-right">列信息</button>').appendTo($toolbar);
             btnColSetting.on('click', function() {
                 var cols = [
-                    {data: 'name', title: '名称', className: 'varchar', isPk: true},
-                    {data: 'displayName', title: '显示名', className: 'varchar', editable: true, defaultContent: ''},
+                    {data: 'name', title: '名称', className: 'varchar', isPk: true, width: 100},
+                    {data: 'displayName', title: '显示名', className: 'varchar', editable: true, defaultContent: '', width: 150},
                     {data: 'dataType', title: '数据类型', defaultContent: '', width: 60},
-                    {data: 'width', title: '宽', editable: true, defaultContent: 0},
+                    {data: 'width', title: '宽', editable: true, defaultContent: 0, width: 60},
                     {data: 'isDisplay', title: '显示', editable: true, defaultContent: true, width: 40, dict: 'Boolean'},
                     {data: 'isPk', title: '主键', width: 40, dict: 'Boolean'},
                     {data: 'isFk', title: '外键', width: 40, dict: 'Boolean'},
                     {data: 'isHighlight', title: '高亮', width: 40, dict: 'Boolean', defaultContent: 'false', editable: true},
                     {data: 'editable', title: '编辑', width: 40, dict: 'Boolean', defaultContent: 'false', editable: true},
                     {data: 'displayStyle', title: '显示风格', editable: true, defaultContent: MU.C_DS_TEXT, width: 60, dict: 'DisplayStyle'},
-                    {data: 'dict', title: '数据字典', editable: true, defaultContent: '', dict: 'DictList'},
+                    {data: 'dict', title: '数据字典', editable: true, defaultContent: '', dict: 'DictList', width: 80},
                     {data: 'align', title: '对齐', editable: true, defaultContent: 'left', width: 60, dict: 'Align'},
                     {data: 'sortNum', title: '排序号', editable: true, width: 50}
                 ];
@@ -429,10 +447,16 @@ MU.ui.DataTable = function($container, $toolbar) {
                             serverSide: false,
                             paginate: false,
                             searching: true,
-                            autoWidth: false
+                            autoWidth: false,
+                            dom: 'frtip'
                         });
+
+                        // 工具按钮
+                        var $div = $('<div></div>').addClass('pull-left');
+                        var $up = $('<a id="btnDbAddTrace"><span class="glyphicon glyphicon-plus"></span></a>').appendTo($div);
+                        $content.find('.dataTables_filter').prepend($div);
                     }
-                }).width(1200).height(400).show();
+                }).width(1000).height(400).show();
             });
         }
     }
@@ -881,7 +905,7 @@ MU.ui.DataForm = function($conainer) {
 
             // 查询条件多件多于3行的，增加查看更多多件
             if($conainer && formGrid.getRows() > 3) {
-                $form.css({'height': '135px'});
+                $form.css({'height': '125px'});
                 var $moreConditions = $('<div class="moreConditions"><a>查看更多条件<i class="glyphicon glyphicon-menu-down"></i></a></div>');
                 $conainer.append($moreConditions);
                 $moreConditions.find('a').click(function() {
