@@ -277,6 +277,7 @@ router.get('/dbTrace', function(req, res, next) {
     var table = req.query.table;
     var data = JSON.parse(req.query.data);
     var title = req.query.title;
+    var pkColName = req.query.pkColName;
     var result = [];
     //result.push({table: table, data: data});
     var traces = config.getDbTrace(table)[title];
@@ -284,7 +285,17 @@ router.get('/dbTrace', function(req, res, next) {
         res.send('<h2>请配置数据跟踪！</h2>');
         return;
     }
+    if(!pkColName) {
+        res.send('<h2>请设置主键列！</h2>');
+        return;
+    }
     traces.unshift({parentCol: traces[1].parentCol, childCol: traces[1].parentCol});
+
+    db.setDataSource(table);
+    var mainBuild = sqlBuilder.create().from(table.split('.')[2]);
+    var array = pkColName.split(',');
+    for(var i = 0; i )
+    db.query()
 
     function getTableName(parentCol) {
         return parentCol.substr(0, parentCol.lastIndexOf('.'));

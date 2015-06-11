@@ -79,13 +79,21 @@ input.text-error, textarea.text-error, select.text-error {
     color: #b94a48;
 }
 
+/* 数据表格 */
+/* 重写datatables样式*/
+table.dataTable thead th {
+    padding: 5px;
+}
+table.dataTable tbody td {
+    padding: 0;
+}
+
 .dataTable td > div {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     word-wrap: normal;
-    height: 20px;
-    line-height: 20px;
+    padding: 2px 5px;
 }
 .dataTable td > a {
     display: block;
@@ -160,11 +168,21 @@ input.text-error, textarea.text-error, select.text-error {
 /* 数据字典 */
 .Boolean {
     text-align: center;
-    color: #fff;
 }
 .Boolean_true {
     background-color: #2BA812;
+    color: #fff;
 }
 .Boolean_false {
     background-color: #f75505;
+    color: #fff;
+}
+/* 高亮 */
+td.highlight, td > div.highlight {
+    background-color: whitesmoke !important;
+}
+/* 可编辑控件 */
+td input, td select {
+    color: #000;
+    margin: -2px -5px;
 }

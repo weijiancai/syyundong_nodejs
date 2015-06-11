@@ -287,7 +287,7 @@ Tools.DB = function() {
                         value: '追踪',
                         callback: function() {
                             var $content = this._$('content');
-                            window.open('/tools/dbTrace?table=' + id + '&title=' + $content.find('ul li.active a').text() + '&data=' + JSON.stringify(selectedData));
+                            window.open('/tools/dbTrace?table=' + id + '&pkColName=' + crud.dataTable().getPkColNames() + '&title=' + $content.find('ul li.active a').text() + '&data=' + JSON.stringify(selectedData));
                         }
                     }
                 ],

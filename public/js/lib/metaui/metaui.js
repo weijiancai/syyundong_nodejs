@@ -181,7 +181,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                 }
                 if(!MU.UString.isEmpty(curColumn.dict)) {
                     settings.type = 'select';
-                    settings.data = MU.Dict.getCode(curColumn.dict);
+                    settings.data = $.extend({'noSelectValue': ''}, MU.Dict.getCode(curColumn.dict));
                 }
                 $editable.editable(editUrl, settings);
             });
@@ -251,6 +251,10 @@ MU.ui.DataTable = function($container, $toolbar) {
         editUrl = url;
         editParams = params;
         editCallback = callback;
+        // 所有列可编辑
+        for(var i = 1; i < option.columns.length; i++) {
+            option.columns[i].editable = true;
+        }
     };
 
     this.setColumns = function(columns) {
@@ -291,12 +295,21 @@ MU.ui.DataTable = function($container, $toolbar) {
             for(var i = 1; i < columns.length; i++) {
                 columns[i].render = (function(currentCol) {
                     return function(data) {
-                        if(!MU.UString.isEmpty(currentCol.dict)) {
+                        var $div = $('<div></div>');
+                        if(!MU.UString.isEmpty(currentCol.dict) && currentCol.dict != 'noSelectValue') {
                             var clazz = currentCol.dict + ' ' + currentCol.dict + '_' + data;
-                            return '<div class="' + clazz + '">' + MU.Dict.getCode(currentCol.dict)[data] + '</div>';
+                            var codeValue = MU.Dict.getCode(currentCol.dict)[data];
+                            data = (codeValue ? codeValue : data);
+                            $div.addClass(clazz);
                         }
 
-                        return '<div>' + data + '</div>';
+                        if(currentCol.isHighlight) {
+                            $div.addClass('highlight');
+                        }
+
+                        $div.text(data);
+
+                        return $div.prop('outerHTML');
                     }
                 })(columns[i]);
             }
@@ -321,6 +334,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                     obj.data = obj.name;
                     obj.title = obj.displayName;
                     obj.defaultContent = '';
+                    obj.visible = obj.isDisplay;
                 }
                 self.setColumns(data);
                 createDataTable(settings);
@@ -361,9 +375,11 @@ MU.ui.DataTable = function($container, $toolbar) {
                     {data: 'displayName', title: '显示名', className: 'varchar', editable: true, defaultContent: ''},
                     {data: 'dataType', title: '数据类型', defaultContent: '', width: 60},
                     {data: 'width', title: '宽', editable: true, defaultContent: 0},
-                    {data: 'isDisplay', title: '是否显示', editable: true, defaultContent: true, width: 60, dict: 'Boolean'},
+                    {data: 'isDisplay', title: '显示', editable: true, defaultContent: true, width: 40, dict: 'Boolean'},
                     {data: 'isPk', title: '主键', width: 40, dict: 'Boolean'},
                     {data: 'isFk', title: '外键', width: 40, dict: 'Boolean'},
+                    {data: 'isHighlight', title: '高亮', width: 40, dict: 'Boolean', defaultContent: 'false', editable: true},
+                    {data: 'editable', title: '编辑', width: 40, dict: 'Boolean', defaultContent: 'false', editable: true},
                     {data: 'displayStyle', title: '显示风格', editable: true, defaultContent: MU.C_DS_TEXT, width: 60, dict: 'DisplayStyle'},
                     {data: 'dict', title: '数据字典', editable: true, defaultContent: '', dict: 'DictList'},
                     {data: 'align', title: '对齐', editable: true, defaultContent: 'left', width: 60, dict: 'Align'},
@@ -377,7 +393,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                 var orders = dt.colReorder.order();
                 for(var i = 1; i < orders.length; i++) {
                     var col = option.columns[orders[i]];
-                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, width: col.width, align: col.align, displayStyle: col.displayStyle, dict: col.dict, sortNum: (i + 1) * 10, sourceColNum: i};
+                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, editable: col.editable, width: col.width, align: col.align, displayStyle: col.displayStyle, dict: col.dict, sortNum: (i + 1) * 10, sourceColNum: i, isHighlight: col.isHighlight};
                     data.push(obj);
                 }
 
@@ -393,7 +409,20 @@ MU.ui.DataTable = function($container, $toolbar) {
                             var dtColumn = dt.column(sourceColNum);
                             if(colName == 'displayName') { // 更新显示名
                                 $(dtColumn.header()).html(value);
+                            } else if(colName == 'isHighlight') { // 高亮列
+                                if(value == 'true') {
+                                    $(dtColumn.nodes()).find('> div').addClass('highlight');
+                                } else {
+                                    $(dtColumn.nodes()).find('> div').removeClass('highlight');
+                                }
+                                value = (value == 'true');
+                            } else if(colName == 'isDisplay') { // 是否显示
+                                value = (value == 'true');
+                                option.columns[sourceColNum].visible = value;
+                                dtColumn.visible(value);
                             }
+
+                            option.columns[sourceColNum][colName] = value;
                         });
                         dataTable.applyOption({
                             data: data,
