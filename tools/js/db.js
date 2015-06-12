@@ -263,12 +263,53 @@ Tools.DB = function() {
                 content: $('#tpl_dbTrace').html(),
                 button: [
                     {
+                        value: '复制',
+                        callback: function() {
+                            $.get('/tools/dbGetTrace', function(data) {
+                                var options = '<option>-- 请选择 --</option>';
+                                for(var key in data) {
+                                    if(data.hasOwnProperty(key)) {
+                                        options += '<option value="' + key + '">' + key + '</option>';
+                                    }
+                                }
+                                dialog({
+                                    title: '复制已有数据追踪',
+                                    content: '<select id="title" class="form-control">' + options + '</select><select id="trace" class="form-control"></select>',
+                                    onshow: function() {
+                                        var $content = this._$('content');
+                                        var $trace = $content.find('#trace');
+
+                                        $content.find('#title').change(function() {
+                                            var value = $(this).val();
+                                            if(data[value]) {
+                                                $trace.empty();
+                                                for(var key in data[value]) {
+                                                    $trace.append('<option value="' + key + '">' + key + '</option>')
+                                                }
+                                            }
+                                        });
+                                    },
+                                    ok: function() {
+                                        var $content = this._$('content');
+                                        var $trace = $content.find('#trace');
+                                        var $title = $content.find('#title');
+                                        var trace = $trace.val();
+                                        var title = $title.val();
+                                        $.post('/tools/dbSaveTrace', {table: id, title: trace, traces: JSON.stringify(data[title][trace])}, function() {
+                                            MU.ui.Message.alert('保存成功！');
+                                        });
+                                    }
+                                }).show()
+                            });
+                        }
+                    },
+                    {
                         value: '保存',
                         callback: function() {
                             var $content = this._$('content');
                             var traces = [];
 
-                            var $a = $content.find('ul li.active a');
+                            var $a = $content.find('ul.nav-tabs li.active a');
                             var title = $a.text();
                             var tab_id = $a.attr('href');
                             $content.find(tab_id).find('table tbody tr').each(function() {
@@ -287,25 +328,25 @@ Tools.DB = function() {
                         value: '追踪',
                         callback: function() {
                             var $content = this._$('content');
-                            window.open('/tools/dbTrace?table=' + id + '&pkColName=' + crud.dataTable().getPkColNames() + '&title=' + $content.find('ul li.active a').text() + '&data=' + JSON.stringify(selectedData));
+                            window.open('/tools/dbTrace?table=' + id + '&pkColName=' + crud.dataTable().getPkColNames() + '&title=' + $content.find('ul.nav-tabs li.active a').text() + '&data=' + JSON.stringify(selectedData));
                         }
                     }
                 ],
                 onshow: function() {
                     var $content = this._$('content');
-                    var fkData = [];
+                    var fkData = [{parentCol: '', childCol: ''}];
 
                     // 添加tab页
                     function addTab(name, data) {
                         if(name == '未命名') return;
 
-                        var $ul = $content.find('ul');
+                        var $ul = $content.find('ul.nav-tabs');
                         $ul.find('li').removeClass('active');
                         $ul.prepend('<li class="active"><a href="#tab_trace_' + name + '" data-toggle="tab">' + name + '</a></li>');
 
                         var $tabs = $content.find('.tab-content');
                         $tabs.find('> div').removeClass('active');
-                        var tabStr = '<div class="tab-pane active" id="tab_trace_' + name + '">' +
+                        var $tab = $('<div class="tab-pane active" id="tab_trace_' + name + '">' +
                             '    <table style="width: 100%;" id="dbTraceTable">' +
                             '        <thead>' +
                             '        <tr>' +
@@ -315,8 +356,8 @@ Tools.DB = function() {
                             '        </thead>' +
                             '        <tbody></tbody>' +
                             '    </table>' +
-                            '</div>';
-                        var $tab = $tabs.prepend(tabStr);
+                            '</div>');
+                        $tabs.prepend($tab);
                         var $tbody = $tab.find('tbody');
 
 
@@ -325,19 +366,30 @@ Tools.DB = function() {
                         }
 
                         for(var i = 0; i < data.length; i++) {
-                            appendRow($tbody, data[i]['parentCol'], data[i]['childCol']);
+                            appendRow(null, $tbody, data[i]['parentCol'], data[i]['childCol']);
                         }
                     }
 
-                    function appendRow($tbody, value1, value2) {
-                        var tr = $('<tr></tr>').appendTo($tbody);
+                    function appendRow($tr, $tbody, value1, value2) {
+                        var tr = $('<tr></tr>');
+                        if($tr) {
+                            $tr.after(tr);
+                        } else {
+                            tr.appendTo($tbody);
+                        }
+
                         var td1 = $('<td></td>').appendTo(tr);
                         var td2 = $('<td></td>').appendTo(tr);
-                        var td3 = $('<td class="width:4%"></td>').appendTo(tr);
+                        var td3 = $('<td class="width:5%"></td>').appendTo(tr);
                         var plus = $('<a><span class="glyphicon glyphicon-plus"></span></a>').appendTo(td3);
+                        var minus = $('<a>&nbsp;<span class="glyphicon glyphicon-minus"></span></a>').appendTo(td3);
 
                         plus.click(function() {
-                            appendRow($tbody);
+                            appendRow($(this).parent().parent());
+                        });
+
+                        minus.click(function() {
+                            $(this).parent().parent().remove();
                         });
 
                         var tree1 = new MU.ui.ComboTree(td1, dbOption);
@@ -381,7 +433,7 @@ Tools.DB = function() {
                         }
                     });
                 }
-            }).width(800).height(350).show();
+            }).width(850).height(400).show();
         });
 
         // 数据变化

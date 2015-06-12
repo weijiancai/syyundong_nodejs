@@ -905,7 +905,7 @@ MU.ui.DataForm = function($conainer) {
 
             // 查询条件多件多于3行的，增加查看更多多件
             if($conainer && formGrid.getRows() > 3) {
-                $form.css({'height': '125px'});
+                $form.css({'height': '130px'});
                 var $moreConditions = $('<div class="moreConditions"><a>查看更多条件<i class="glyphicon glyphicon-menu-down"></i></a></div>');
                 $conainer.append($moreConditions);
                 $moreConditions.find('a').click(function() {

@@ -272,6 +272,10 @@ router.post('/dbSaveTrace', function(req, res, next) {
     config.addDbTrace(table, title, JSON.parse(traces));
     res.send();
 });
+// 获得数据追踪
+router.get('/dbGetTrace', function(req, res, next) {
+    res.send(config.getDbTrace());
+});
 // 数据追踪
 router.get('/dbTrace', function(req, res, next) {
     var table = req.query.table;
@@ -315,7 +319,10 @@ router.get('/dbTrace', function(req, res, next) {
             var array = [];
             var data = dataCache[getTableName(parentCol)];
             for(var j = 0; j < data.length; j++) {
-                array.push(data[j][parentCol.split('.')[3]]);
+                var colData = data[j][parentCol.split('.')[3]];
+                if(colData) {
+                    array.push(colData);
+                }
             }
 
             // 下一个
