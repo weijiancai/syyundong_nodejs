@@ -55,6 +55,7 @@ MU.ui.DataTable = function($container, $toolbar) {
     // 回掉函数
     var onDataEnd; // 数据准备好后，回调
     var onColumnEnd; // 列信息准备好后，回调
+    var onAjaxPre; // ajax发送请求之前回调
 
     var option = {
         "searching": false,
@@ -71,7 +72,11 @@ MU.ui.DataTable = function($container, $toolbar) {
         "destroy": true,
         "dom": 'Rlfrtip', // 列可拖动
         stateSave: true, // 保存列拖动后的设置
-        "orderFixed": [ 0, 'asc' ], // 第一列固定排序
+        //"orderFixed": [ 0, 'asc' ], // 第一列固定排序
+        columnDefs:[{
+            orderable:false,//禁用排序
+            targets:[0]   //指定的列
+        }],
         "initComplete": function(setting) {
             console.log('initComplete......');
         }
@@ -122,18 +127,24 @@ MU.ui.DataTable = function($container, $toolbar) {
                 $container.find('tbody tr.selected').each(function() {
                     $(this).removeClass('selected');
                     var row = dt.row(this).index();
-                    self.setValue(row, 0, false);
+                    setCheckValue(row, false);
                 });
             }
             // 获得行号
             var row = dt.row(this).index();
             if ($(this).hasClass('selected')) {
                 $(this).removeClass('selected');
-                self.setValue(row, 0, false);
+                setCheckValue(row, false);
             } else {
                 //dt.$('tr.selected').removeClass('selected');
                 $(this).addClass('selected');
-                self.setValue(row, 0, true);
+                setCheckValue(row, true);
+            }
+
+            function setCheckValue(row, value) {
+                if(isMultiSelect) {
+                    self.setValue(row, 1, value);
+                }
             }
         });
         // 单元格编辑
@@ -208,14 +219,39 @@ MU.ui.DataTable = function($container, $toolbar) {
         }
         console.log('init end');
     }).on('preXhr.dt', function (e, settings, data ) { // 发送ajax请求前
-        if(data && option.ajax && option.ajax.data) {
+        if(data) {
             $.extend(data, option.ajax.data);
+            if(onAjaxPre) {
+                onAjaxPre(data);
+            }
         }
     }).on('xhr.dt', function(e, settings, json) { // ajax请求完成后
+        // 写上序号列
+        /*for(var i = 0; i < json.data.length; i++) {
+            json.data[i]['_orderNum_'] = i + 1;
+        }*/
         if(onDataEnd) {
             onDataEnd(json.data);
         }
+    }).on( 'order.dt', function () {
+        rewriteSortNum();
+    }).on('search.dt', function() {
+        rewriteSortNum();
     });
+
+    // 重写排序列
+    function rewriteSortNum() {
+        if(dt) {
+            $(dt.column(0).nodes()).find(':visible').each(function(idx) {
+                $(this).find('div').text(idx + 1);
+            });
+        } else {
+            var $body = $container.find('tbody');
+            $body.find('> tr:visible').each(function(idx) {
+                $(this).find('> td:eq(0) div').text(idx + 1);
+            });
+        }
+    }
 
     this.showPaginate = function(isShow) {
         option.paginate = isShow;
@@ -310,7 +346,18 @@ MU.ui.DataTable = function($container, $toolbar) {
                         if(!MU.UString.isEmpty(currentCol.dict) && currentCol.dict != 'noSelectValue') {
                             var clazz = currentCol.dict + ' ' + currentCol.dict + '_' + data;
                             var codeValue = MU.Dict.getCode(currentCol.dict)[data];
-                            data = (codeValue ? codeValue : data);
+                            if(currentCol.dict == 'Boolean') {
+                                currentCol.align = 'center';
+                                if(data == 'T' || data == '1' || data == 'true') {
+                                    data = '是';
+                                    clazz = currentCol.dict + ' ' + currentCol.dict + '_true';
+                                } else {
+                                    data = '否';
+                                    clazz = currentCol.dict + ' ' + currentCol.dict + '_false';
+                                }
+                            } else {
+                                data = (codeValue ? codeValue : data);
+                            }
                             $div.addClass(clazz);
                         }
 
@@ -363,18 +410,20 @@ MU.ui.DataTable = function($container, $toolbar) {
             onColumnEnd();
         }
         // 所有列可编辑
-        if(editable) {
+        /*if(editable) {
             for(var i = 1; i < option.columns.length; i++) {
                 option.columns[i].editable = true;
             }
-        }
+        }*/
+        // 重置列排序
+        dt.colReorder.reset();
 
         // ====== 安装扩展
         // 列可拖动
 
         // 显示、隐藏列
         if($toolbar) {
-            var options = {
+            /*var options = {
                 "buttonText": "显示/隐藏列",
                 exclude: [0],
                 order: 'alpha',
@@ -383,7 +432,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                 showNone: "Show none"
             };
             var colvis = new $.fn.dataTable.ColVis(dt, options);
-            $(colvis.button()).appendTo($toolbar);
+            $(colvis.button()).appendTo($toolbar);*/
 
             // 列信息
             var btnColSetting = $('<button type="button" class="btn btn-primary pull-right">列信息</button>').appendTo($toolbar);
@@ -391,7 +440,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                 var cols = [
                     {data: 'name', title: '名称', className: 'varchar', isPk: true, width: 100},
                     {data: 'displayName', title: '显示名', className: 'varchar', editable: true, defaultContent: '', width: 150},
-                    {data: 'dataType', title: '数据类型', defaultContent: '', width: 60},
+                    {data: 'dataType', title: '数据类型', defaultContent: '', width: 60, editable: false},
                     {data: 'width', title: '宽', editable: true, defaultContent: 0, width: 60},
                     {data: 'isDisplay', title: '显示', editable: true, defaultContent: true, width: 40, dict: 'Boolean'},
                     {data: 'isPk', title: '主键', width: 40, dict: 'Boolean'},
@@ -403,21 +452,19 @@ MU.ui.DataTable = function($container, $toolbar) {
                     {data: 'align', title: '对齐', editable: true, defaultContent: 'left', width: 60, dict: 'Align'},
                     {data: 'sortNum', title: '排序号', editable: true, width: 50}
                 ];
-                /*cols[0].render = cols[1].render = cols[2].render = cols[3].render = cols[4].render = cols[5].render = cols[6].render = cols[7].render = cols[8].render = cols[9].render = cols[10].render = function(data) {
-                    return '<div>' + data + '</div>';
-                };*/
 
                 var data = [];
                 var orders = dt.colReorder.order();
                 for(var i = 1; i < orders.length; i++) {
                     var col = option.columns[orders[i]];
-                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, editable: col.editable, width: col.width, align: col.align, displayStyle: col.displayStyle, dict: col.dict, sortNum: (i + 1) * 10, sourceColNum: i, isHighlight: col.isHighlight};
+                    var obj = {name: col.data, displayName: col.displayName, dataType: col.dataType, isPk: col.isPk, isFk: col.isFk, isDisplay: col.isDisplay, editable: col.editable, width: col.width, align: col.align, displayStyle: col.displayStyle, dict: col.dict, sortNum: col.sortNum, sourceColNum: i, isHighlight: col.isHighlight};
                     data.push(obj);
                 }
 
                 dialog({
                     title: '列信息',
                     content: '<div><table></table></div>',
+                    padding: 5,
                     onshow: function() {
                         var $content = this._$('content');
                         var dataTable = new MU.ui.DataTable($content.find('table'));
@@ -438,6 +485,8 @@ MU.ui.DataTable = function($container, $toolbar) {
                                 value = (value == 'true');
                                 option.columns[sourceColNum].visible = value;
                                 dtColumn.visible(value);
+                            } else if(colName == 'isPk' || colName == 'isFk' || colName == 'editable') {
+                                value = (value == 'true');
                             }
 
                             option.columns[sourceColNum][colName] = value;
@@ -447,14 +496,67 @@ MU.ui.DataTable = function($container, $toolbar) {
                             serverSide: false,
                             paginate: false,
                             searching: true,
-                            autoWidth: false,
-                            dom: 'frtip'
+                            autoWidth: false
                         });
 
                         // 工具按钮
-                        var $div = $('<div></div>').addClass('pull-left');
-                        var $up = $('<a id="btnDbAddTrace"><span class="glyphicon glyphicon-plus"></span></a>').appendTo($div);
-                        $content.find('.dataTables_filter').prepend($div);
+                        var $div = $(template('tpl_dataTable_colOrderSearch', {}));
+                        $content.prepend($div);
+                        // 重写序号
+                        $div.find('#btnResetSortNum').click(function() {
+                            $.post('/meta/resetSortNum', {id: metaId}, function() {
+                                // 先按原来的顺序排序
+                                dataTable.getApi().column(13).order('asc').draw();
+                                $(dataTable.getApi().column(13).nodes()).each(function(idx) {
+                                    var sortNum = (idx + 1) * 10;
+                                    $(this).find('div').text(sortNum);
+                                    option.columns[dataTable.getRowData(idx).sourceColNum]['sortNum'] = sortNum;
+                                });
+                            });
+                        });
+                        // 置顶
+                        $div.find('span.top').click(function() {
+                            swapRow('top');
+                        });
+                        // 向上
+                        $div.find('span.up').click(function() {
+                            swapRow('up');
+                        });
+                        // 向下
+                        $div.find('span.down').click(function() {
+                            swapRow('down');
+                        });
+                        // 置底
+                        $div.find('span.bottom').click(function() {
+                            swapRow('bottom');
+                        });
+                        // 搜索
+                        $div.find('input.search').keyup(function() {
+                            dataTable.search($(this).val());
+                        });
+
+                        function swapRow(type) {
+                            var row = dataTable.getSelectedRow();
+                            if(row != null && row >= 0) {
+                                var data = dataTable.getApi().data();
+                                var swapData, targetRow;
+                                if(type == 'top' || type == 'up') {
+                                    if(row == 0) return;
+                                    targetRow = (type == 'top' ? 0 : row - 1);
+                                    swapData = dataTable.swapRow(row, targetRow, ['sortNum', 'sourceColNum']);
+                                } else {
+                                    if(row == data.length - 1) return;
+                                    targetRow = (type == 'bottom' ? data.length - 1 : row + 1);
+                                    swapData = dataTable.swapRow(row, targetRow, ['sortNum', 'sourceColNum']);
+                                }
+                                $.post('/meta/edit', {id: metaId, column: 'sortNum', value: swapData[0].sortNum, pks: 'name', pkValues: swapData[0].name});
+                                $.post('/meta/edit', {id: metaId, column: 'sortNum', value: swapData[1].sortNum, pks: 'name', pkValues: swapData[1].name});
+                                // 选中行
+                                dataTable.setSelectRow(targetRow);
+                                // 移动列
+                                self.moveColumn(swapData[0].sourceColNum, swapData[1].sourceColNum);
+                            }
+                        }
                     }
                 }).width(1000).height(400).show();
             });
@@ -476,7 +578,7 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     this.delete = function(params) {
-        var selections = this.getSelectedRow();
+        var selections = this.getSelectedRowData();
         if(selections.length == 0) {
             MU.ui.Message.alert('请选择行！');
             return;
@@ -526,11 +628,21 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     /**
-     * 获得选中行数据
+     * 获得某行的数据
      *
+     * @param row
      * @returns {Object}
      */
-    this.getSelectedRow = function() {
+    this.getRowData = function(row) {
+        return dt.row(row).data();
+    };
+
+    /**
+     * 获得选中行数据
+     *
+     * @returns {Array}
+     */
+    this.getSelectedRowData = function() {
         var selectedRows = [];
         $(dt.table().body()).find('tr.selected').each(function() {
             selectedRows.push(dt.row(this).data());
@@ -539,12 +651,40 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     /**
+     * 获得选中行号
+     *
+     * @returns {Number || Array}
+     */
+    this.getSelectedRow = function() {
+        var selectedRows = [];
+        $(dt.table().body()).find('tr.selected').each(function() {
+            selectedRows.push(dt.row(this).index());
+        });
+        if(selectedRows.length == 0) {
+            return null;
+        }
+        if(selectedRows.length == 1) {
+            return selectedRows[0];
+        }
+        return selectedRows;
+    };
+
+    /**
+     * 选中某行
+     *
+     * @param rowNum
+     */
+    this.setSelectRow = function(rowNum) {
+        $(dt.table().body()).find('tr').eq(rowNum).addClass('selected');
+    };
+
+    /**
      * 获得选中行的主键值
      *
      * @returns {*}
      */
     this.getSelectedPkColValue = function() {
-        var selectedRows = this.getSelectedRow();
+        var selectedRows = this.getSelectedRowData();
         if(selectedRows.length == 0) {
             return null;
         }
@@ -598,7 +738,7 @@ MU.ui.DataTable = function($container, $toolbar) {
      * 设置追踪数据变化历史
      */
     this.setTraceDataChange = function() {
-        var selectedData = this.getSelectedRow();
+        var selectedData = this.getSelectedRowData();
         if(selectedData.length == 0) {
             MU.ui.Message.alert('请选择数据！');
             return false;
@@ -671,6 +811,80 @@ MU.ui.DataTable = function($container, $toolbar) {
         return dt;
     };
 
+    /**
+     * 移动行数据，
+     *
+     * @param sourceRowNum 原始行号
+     * @param targetRowNum 目标行号
+     * @param cols {Array} 要移动的列数据
+     * @return {Array} 返回交换后的数据
+     */
+    this.swapRow = function(sourceRowNum, targetRowNum, cols) {
+        var data = dt.data();
+        var sourceData = data[sourceRowNum];
+        var targetData = data[targetRowNum];
+        if(cols && cols.length > 0) {
+            for(var i = 0; i < cols.length; i++) {
+                var col = cols[i];
+                var temp = sourceData[col];
+                sourceData[col] = targetData[col];
+                targetData[col] = temp;
+            }
+        }
+        data.splice(sourceRowNum, 1, targetData);
+        data.splice(targetRowNum, 1, sourceData);
+
+        dt.clear();
+        dt.rows.add(data).draw();
+
+        return [sourceData, targetData];
+    };
+
+    this.moveRow = function(sourceRowNum, targetRowNum, cols) {
+        var data = dt.data();
+        var sourceData = data[sourceRowNum];
+        var targetData = data[targetRowNum];
+        if(cols && cols.length > 0) {
+            for(var i = 0; i < cols.length; i++) {
+                var col = cols[i];
+                var temp = sourceData[col];
+                sourceData[col] = targetData[col];
+                targetData[col] = temp;
+            }
+        }
+        data.splice(sourceRowNum, 1, targetData);
+        data.splice(targetRowNum, 1, sourceData);
+
+        dt.clear();
+        dt.rows.add(data).draw();
+
+        return [sourceData, targetData];
+    };
+
+    /**
+     * 移动列
+     * @param sourceColNum
+     * @param targetColNum
+     */
+    this.moveColumn = function(sourceColNum, targetColNum) {
+        var orders = dt.colReorder.order();
+        var source, target;
+        for(var i = 0; i < orders.length; i++) {
+            if(orders[i] == sourceColNum) {
+                source = i;
+            } else if(orders[i] == targetColNum) {
+                target = i;
+            }
+        }
+        orders.splice(source, 1);
+        orders.splice(target, 0, sourceColNum);
+        dt.colReorder.order(orders);
+    };
+
+    this.search = function(value) {
+        dt.search(value).draw();
+    };
+
     this.onInitComplete = function(callback) {
         initComplete = callback;
     };
@@ -681,7 +895,11 @@ MU.ui.DataTable = function($container, $toolbar) {
 
     this.onColumnEnd = function(callback) {
         onColumnEnd = callback;
-    }
+    };
+
+    this.onAjaxPre = function(callback) {
+        onAjaxPre = callback;
+    };
 };
 
 /* 常量 */
@@ -1223,15 +1441,13 @@ MU.ui.DataCrud = function($container) {
     var appendConditions = [];
 
     var dt = new MU.ui.DataTable($dataTable, $buttons);
-    dt.onInitComplete(function() {
-        $buttons.show();
-    });
     var queryForm = new MU.ui.DataForm($queryForm);
     queryForm.colCount = 3;
     queryForm.formType = MU.C_FT_QUERY;
 
     dt.onColumnEnd(function() {
         queryForm.genByDataTable(dt);
+        $buttons.show();
     });
 
     // 查询

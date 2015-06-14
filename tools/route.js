@@ -67,7 +67,7 @@ router.post('/dbRetrieve', function(req, res, next) {
     db.queryByPage(sql, start, length, function(data) {
         data.draw = parseInt(req.body.draw) || 1;
         res.send(data);
-    }, tableName, pkColName);
+    }, tableName, pkColName.split(',')[0]);
 });
 
 router.post('/dbGetDataSource', function(req, res, next) {

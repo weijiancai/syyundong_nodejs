@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<!-- 
+<!--
 
 Template Name: Metronic - Responsive Admin Dashboard Template build with Twitter Bootstrap 2.3.1
 
@@ -14,12 +14,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 
 -->
 
-<!--[if IE 8]> <html lang="en" class="ie8 no-js"> <![endif]-->
-
-<!--[if IE 9]> <html lang="en" class="ie9 no-js"> <![endif]-->
-
-<!--[if !IE]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
-
+<html ng-app="toolsApp">
 <!-- BEGIN HEAD -->
 
 <head>
@@ -31,7 +26,8 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<!-- BEGIN GLOBAL MANDATORY STYLES -->
 	<link href="/public/css/bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css"/>
 	<!--<link href="/views/admin/media/css/bootstrap-responsive.min.css" rel="stylesheet" type="text/css"/>-->
-	<link href="/views/admin/media/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+	<link href="/public/css/font-awesome-4.3.0/css/font-awesome.css" rel="stylesheet" type="text/css"/>
+	<link href="/public/css/iconfont/iconfont.css" rel="stylesheet" type="text/css"/>
 	<!--<link href="/views/admin/media/css/style-metro.css" rel="stylesheet" type="text/css"/>-->
 	<link href="/views/admin/media/css/style.css" rel="stylesheet" type="text/css"/>
 	<link href="/views/admin/media/css/style-responsive.css" rel="stylesheet" type="text/css"/>
@@ -65,7 +61,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 
 <!-- BEGIN BODY -->
 
-<body class="page-header-fixed">
+<body class="page-header-fixed" ng-controller="ToolsCtrl">
 	<!-- BEGIN CONTAINER -->
 	<div class="page-container" style="margin-top: 0;">
 		<!-- BEGIN SIDEBAR -->
@@ -239,6 +235,7 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 	<script src="/public/js/lib/metaui/metaui.js" type="text/javascript"></script>
 	<script src="/public/js/lib/template.js" type="text/javascript"></script>
 	<script src="/public/js/page_tools.js" type="text/javascript"></script>
+	<script src="/tools/js/tools_angular.js" type="text/javascript"></script>
 	<script src="/tools/js/ftp.js" type="text/javascript"></script>
 	<script src="/tools/js/db.js" type="text/javascript"></script>
 	<script src="/tools/js/tpl.js" type="text/javascript"></script>

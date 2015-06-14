@@ -55,7 +55,7 @@ Tools.tpl = {
         });
         // 编辑模板
         $('#btnEditTpl').click(function() {
-            var selectedRow = tplTable.getSelectedRow();
+            var selectedRow = tplTable.getSelectedRowData();
             if(selectedRow.length > 0) {
                 $('#tplTables').hide();
                 $('#tplEdit').show();

@@ -203,7 +203,7 @@ Tools.DB = function() {
     };
 
     this.initTable = function(id, children) {
-        var columns = [], pk;
+        /*var columns = [], pk;
         for(var i = 0; i < children.length; i++) {
             var column = children[i];
             var name = column.id.split('.')[3];
@@ -226,7 +226,7 @@ Tools.DB = function() {
             }
             obj.defaultContent = '';
             columns.push(obj);
-        }
+        }*/
 
         var tableName = id.split('.')[2];
         var $tabs = $('#db_tablesPanel');
@@ -253,12 +253,109 @@ Tools.DB = function() {
         // 数据追踪
         crud.addControlButton('数据追踪', function() {
             var dt = crud.dataTable();
-            var selectedData = dt.getSelectedRow();
+            var selectedData = dt.getSelectedRowData();
             if(selectedData.length == 0) {
                 MU.ui.Message.alert('请选择数据！');
                 return;
             }
-            dialog({
+
+            var data = [
+                {
+                    title: '进货任务跟踪',
+                    tables: [
+                        {
+                            table: 'ectongs.yhbis.wm_op_pickup',
+                            columns: [
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'},
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'}
+                            ]
+                        },
+                        {
+                            table: 'ectongs.yhbis.wm_op_pickup',
+                            columns: [
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'},
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: '销退任务跟踪',
+                    tables: [
+                        {
+                            table: 'ectongs.yhbis.wm_op_pickup',
+                            columns: [
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'},
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'}
+                            ]
+                        },
+                        {
+                            table: 'ectongs.yhbis.wm_op_pickup',
+                            columns: [
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'},
+                                {column: 'task_id', valueColumn: 'ectongs.yhbis.wm_op_task.task_id'}
+                            ]
+                        }
+                    ]
+                }
+            ];
+
+            $.post('/tools/dbGetFkRefCol', {table: id}, function(data) {
+                if(data) {
+                    var fkData = [{parentCol: '', childCol: ''}];
+
+                    if(data['未命名']) {
+                        fkData = data['未命名'];
+                        data = [];
+                    }
+
+                    dialog({
+                        title: '数据追踪',
+                        padding: 5,
+                        content: template('tpl_dbTrace', {list: data}),
+                        onshow: function() {
+                            var $content = this._$('content');
+
+                            // 增加
+                            $content.find('#btnDbAddTrace').click(function() {
+                                dialog({
+                                    title: '设置名称',
+                                    content: '<input type="text" class="form-control" value="">',
+                                    button: [
+                                        {
+                                            value: '保存',
+                                            callback: function() {
+                                                var subContent = this._$('content');
+                                                var name = subContent.find('input').val();
+                                                addTab(name);
+                                            }
+                                        }
+                                    ]
+                                }).show();
+                            });
+
+                            function addTab(name) {
+                                if(name == '未命名') return;
+
+                                var $ul = $content.find('ul.nav-tabs');
+                                $ul.find('li').removeClass('active');
+                                $ul.prepend('<li class="active"><a href="#tab_trace_' + name + '" data-toggle="tab">' + name + '</a></li>');
+
+                                var $tabs = $content.find('.tab-content');
+                                $tabs.find('> div').removeClass('active');
+                                var $tab = $(template('tpl_dbTrace_tab', {title: name}));
+                                $tabs.prepend($tab);
+
+                                // 添加表
+
+                            }
+                        }
+                    }).width(850).height(500).show();
+                }
+            });
+
+
+            /*dialog({
                 title: '数据追踪',
                 content: $('#tpl_dbTrace').html(),
                 button: [
@@ -433,7 +530,7 @@ Tools.DB = function() {
                         }
                     });
                 }
-            }).width(850).height(400).show();
+            }).width(850).height(400).show();*/
         });
 
         // 数据变化
@@ -525,9 +622,12 @@ Tools.DB = function() {
         dt.setHeight(400);
         //dt.setColumns($.extend([], columns));
         dt.setMetaId(id);
-        dt.setUrl('/tools/dbRetrieve?id=' + id + '&pk=' + (pk ? pk : ''));
+        dt.setUrl('/tools/dbRetrieve?id=' + id);
         dt.setEditable(true, '/tools/dbEditTable', {table: id});
         dt.setDeleteUrl('/tools/dbDeleteTableRow', {table: id});
+        dt.onAjaxPre(function(data) {
+            data['pk'] = dt.getPkColNames();
+        });
         dt.applyOption();
     };
 
