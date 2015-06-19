@@ -38,36 +38,53 @@ router.post('/dbRetrieve', function(req, res, next) {
     var datasource = id.split('.')[0];
     var ds = config.getDataSource(datasource, id.split('.')[1]);
     db.setDataSource(ds);
-    /*var conditions = eval('(' + req.body.conditions + ')');
-    var where = '';
-    if(conditions && conditions.length > 0) {
-        where = ' where ';
-        for(var i = 0; i < conditions.length; i++) {
-            var obj = conditions[i];
-            var mode = obj['mode'];
-            if(mode == '%%') {
-                where += obj['name'] + " like '%" + obj['value'] + "%'";
-            } else if(mode == '*%') {
-                where += obj['name'] + " like '" + obj['value'] + "%'";
-            } else if(mode == '%*') {
-                where += obj['name'] + " like '%" + obj['value'] + "'";
-            } else {
-                where += obj['name'] + obj['mode'] + "'" + obj['value'] + "'";
-            }
-            if(i < conditions.length - 1) {
-                where += ' and ';
-            }
-        }
-    }*/
+
     var tableName = id.substr(datasource.length + 1);
     if(ds.dbType == 'sqlServer') {
         tableName = tableName.replace('.', '.dbo.');
     }
-    var sql = sqlBuilder.create().query().from(tableName).addConditions(conditions).build();
-    db.queryByPage(sql, start, length, function(data) {
+    var sql = sqlBuilder.create().query().from(tableName).addConditions(conditions);
+    // 列信息
+    var metaConfig = config.getMetaConfig(id);
+    if(metaConfig) {
+        for(var j = 0; j < metaConfig.length; j++) {
+            var col = metaConfig[j];
+            if(col.id.substr(0, 2) == '$$') continue;
+
+            sql.query(col.name);
+            if(col.isFk && col.fkCol && col.fkDisplayCol) {
+                var strs = col.fkCol.split('.');
+                sql.query("(SELECT " + col.fkDisplayCol + " FROM " + strs[0]+ " WHERE " + col.fkCol + "=" + (tableName + "." + col.name) + ") " + strs[0] + "_" + col.fkDisplayCol);
+            }
+        }
+    }
+    // 排序
+    var orderBy = '';
+    var i = 0, k = 0;
+    while(true) {
+        var orderKey = 'order[' + i + '][column]';
+        if(!req.body[orderKey]) {
+            break;
+        }
+        var colKey = 'columns[' + req.body[orderKey] + '][data]';
+        var orderable = req.body['columns[' + req.body[orderKey] + '][orderable]'];
+        if(orderable == 'true') {
+            var colName = req.body[colKey];
+            var dir = req.body['order[' + i + '][dir]'];
+            //sql.order(colName + ' ' + dir);
+            if(k > 0) {
+                orderBy += ', ';
+            }
+            orderBy += colName + ' ' + dir;
+            k++;
+        }
+
+        i++;
+    }
+    db.queryByPage(sql.build(), start, length, function(data) {
         data.draw = parseInt(req.body.draw) || 1;
         res.send(data);
-    }, tableName, pkColName.split(',')[0]);
+    }, tableName, pkColName.split(',')[0], orderBy);
 });
 
 router.post('/dbGetDataSource', function(req, res, next) {
@@ -216,6 +233,45 @@ router.post('/dbSearch', function(req, res, next) {
     });
 });
 // 获得外键引用列
+router.post('/dbGetTraceConfig', function(req, res, next) {
+    var table = req.body.table;
+
+    var traces = config.getDbTrace(table);
+    if(traces) {
+        res.send(traces);
+        return;
+    }
+
+    var strs = table.split('.');
+    var datasource = strs[0];
+    var schema = strs[1];
+    var tableName = strs[2];
+    db.setDataSource(config.getDataSource(datasource, schema));
+    db.getFKConstraintsColumns(schema, function(data) {
+        var result = [], aCache = [];
+        var prefix = datasource + '.' + schema + '.';
+        iterator(tableName);
+
+        function iterator(refTableName, refColName) {
+            for(var i = 0; i < data.length; i++) {
+                if(underscore._.indexOf(aCache, i) > -1) {
+                    continue;
+                }
+
+                var obj = data[i];
+                if(obj['referenced_table_name'] == refTableName) {
+                    var parentCol = prefix + refTableName + '.' + obj['referenced_column_name'];
+                    result.push({parentCol: parentCol, childCol: prefix + obj['table_name'] + '.' + obj['column_name']});
+                    aCache.push(i);
+                    iterator(obj['table_name'], obj['column_name']);
+                }
+            }
+        }
+
+        res.send({'未命名': result});
+    });
+});
+// 获得外键引用列
 router.post('/dbGetFkRefCol', function(req, res, next) {
     var table = req.body.table;
 
@@ -299,6 +355,7 @@ router.get('/dbTrace', function(req, res, next) {
     for(var i = 0; i < array.length; i++) {
         mainBuild.and(array[i], data[0][array[i]]);
     }
+
     db.query(mainBuild.build(), function(data) {
         result.push({table: table, data: data});
 
@@ -306,40 +363,42 @@ router.get('/dbTrace', function(req, res, next) {
             return parentCol.substr(0, parentCol.lastIndexOf('.'));
         }
 
-        var dataCache = {};
-        dataCache[getTableName(traces[1].parentCol)] = data;
-
-        function iterator(parentCol, childCol, i) {
-            var strs = childCol.split('.');
+        function iterator(traceTable, i) {
+            var strs = traceTable.table.split('.');
             var datasource = strs[0];
             var schema = strs[1];
             var tableName = strs[2];
-            var colName = strs[3];
-
-            var array = [];
-            var data = dataCache[getTableName(parentCol)];
-            for(var j = 0; j < data.length; j++) {
-                var colData = data[j][parentCol.split('.')[3]];
-                if(colData) {
-                    array.push(colData);
-                }
-            }
 
             // 下一个
             function next(data) {
-                result.push({table: datasource + '.' + schema + '.' + tableName, data: data});
+                result.push({table: traceTable.table, data: data});
                 if(i == traces.length - 1) {
                     res.render('tools/db_trace', {result: result});
                 } else {
                     i++;
-                    dataCache[getTableName(traces[i].parentCol)] = data.concat(dataCache[getTableName(traces[i].parentCol)] || []);
-                    iterator(traces[i].parentCol, traces[i].childCol, i);
+                    iterator(traces[i], i);
                 }
             }
 
-            if(array.length == 0) {
-                next([]);
-                return;
+            function getColumnValue(valueColumn) {
+                var array = [];
+                var idx = valueColumn.lastIndexOf('.');
+                var table = valueColumn.substr(0, idx);
+                var column = valueColumn.substr(idx + 1);
+                for(var m = result.length - 1; m >= 0; m--) {
+                    if(result[m]['table'] == table) {
+                        var data = result[m].data;
+                        for(var j = 0; j < data.length; j++) {
+                            var colData = data[j][column];
+                            if(colData) {
+                                array.push(colData);
+                            }
+                        }
+                        return array;
+                    }
+                }
+
+                return array;
             }
 
             var ds =config.getDataSource(datasource, schema);
@@ -351,13 +410,25 @@ router.get('/dbTrace', function(req, res, next) {
                 tName = schema + '.' + tableName;
             }
             var builder = sqlBuilder.create().query().from(tName);
-            builder.and(colName, array);
+            var values = [];
+            for(var k = 0; k < traceTable.columns.length; k++) {
+                var traceColumn = traceTable.columns[k];
+                array = getColumnValue(traceColumn.valueColumn);
+                values = values.concat(array);
+                builder.and(traceColumn.column, array);
+            }
+
+            if(values.length == 0) {
+                next([]);
+                return;
+            }
+
             db.query(builder.build(), function(data) {
                 next(data);
             });
         }
 
-        iterator(traces[0].parentCol, traces[0].childCol, 0);
+        iterator(traces[0], 0);
     });
 
 
@@ -464,7 +535,7 @@ router.get('/ftpDelete', function(req, res, next) {
         });
         // connect to localhost:21 as anonymous
         ftp.connect({
-            host: '115.29.163.55',
+            host: '192.168.56.1',
             user: 'wei_jc',
             password: 'wjcectongs2013#'
         });
@@ -506,7 +577,7 @@ router.get('/ftpDownload', function(req, res, next) {
         });
         // connect to localhost:21 as anonymous
         ftp.connect({
-            host: '115.29.163.55',
+            host: '192.168.56.1',
             user: 'wei_jc',
             password: 'wjcectongs2013#'
         });
@@ -546,7 +617,86 @@ router.post('/ftpUpload', function(req, res, next) {
         });
         // connect to localhost:21 as anonymous
         ftp.connect({
-            host: '115.29.163.55',
+            host: '192.168.56.1',
+            user: 'wei_jc',
+            password: 'wjcectongs2013#'
+        });
+    } else {
+        res.send({success: true});
+    }
+});
+
+// 文件剪贴板
+router.post('/ftpClipboard', function(req, res, next) {
+    var path = req.body.path;
+    var content = req.body.content;
+    var projectDir = req.projectDir;
+    var localPath = projectDir + '/clipboard.txt';
+    var remotePath = path + '/clipboard.txt';
+
+    console.log('local path = ' + localPath);
+    console.log('remote path = ' + remotePath);
+
+    fs.writeFile(localPath, content);
+
+    if(path) {
+        var ftp = new Ftp();
+        ftp.on('ready', function() {
+            ftp.put(localPath, remotePath, function(err) {
+                if (err) {
+                    console.log(err);
+                    res.send();
+                    return;
+                }
+
+                ftp.end();
+                ftp.destroy();
+
+            });
+        }).on('end', function() {
+            res.send();
+        }).on('error', function(err) {
+            console.log(err);
+            res.send({success: true});
+        });
+        // connect to localhost:21 as anonymous
+        ftp.connect({
+            host: '192.168.56.1',
+            user: 'wei_jc',
+            password: 'wjcectongs2013#'
+        });
+    } else {
+        res.send({success: true});
+    }
+});
+
+// 文件下载
+router.get('/ftpGetClipboard', function(req, res, next) {
+    var path = '/wei_jc/clipboard.txt';
+
+    if(path) {
+
+        var ftp = new Ftp();
+        ftp.on('ready', function() {
+            ftp.get(path, function(err, stream) {
+                if (err) {
+                    console.log(err);
+                    res.send();
+                    return;
+                }
+
+                stream.once('close', function() { ftp.end(); });
+                stream.pipe(res);
+            });
+        }).on('end', function() {
+            res.send();
+        }).on('error', function(err) {
+            console.log(err);
+            res.send({success: true});
+        });
+        // connect to localhost:21 as anonymous
+        ftp.connect({
+            host: '192.168.56.1',
             user: 'wei_jc',
             password: 'wjcectongs2013#'
         });

@@ -92,3 +92,17 @@ label {
     margin-right: 8px;
     font-size: 12px;
 }
+
+.dbTrace {
+    height: 480px;
+    overflow: auto;
+}
+.dbTrace ul > li {
+    border-bottom: 1px solid #ccc;
+    padding: 5px 0;
+}
+.dbTrace .tab-content {
+    height: 430px;
+    padding: 5px;
+    overflow: scroll;
+}

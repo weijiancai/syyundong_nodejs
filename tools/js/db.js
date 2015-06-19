@@ -300,7 +300,7 @@ Tools.DB = function() {
                 }
             ];
 
-            $.post('/tools/dbGetFkRefCol', {table: id}, function(data) {
+            $.post('/tools/dbGetTraceConfig', {table: id}, function(data) {
                 if(data) {
                     var fkData = [{parentCol: '', childCol: ''}];
 
@@ -308,13 +308,135 @@ Tools.DB = function() {
                         fkData = data['未命名'];
                         data = [];
                     }
+                    var traceData = [];
+                    for(var key in data) {
+                        if(data.hasOwnProperty(key)) {
+                            traceData.push({title: key, tables: data[key]});
+                        }
+                    }
 
                     dialog({
                         title: '数据追踪',
                         padding: 5,
-                        content: template('tpl_dbTrace', {list: data}),
+                        content: template('tpl_dbTrace', {list: traceData}),
+                        button: [
+                            {
+                                value: '复制',
+                                callback: function() {
+                                    $.get('/tools/dbGetTrace', function(data) {
+                                        var options = '<option>-- 请选择 --</option>';
+                                        for(var key in data) {
+                                            if(data.hasOwnProperty(key)) {
+                                                options += '<option value="' + key + '">' + key + '</option>';
+                                            }
+                                        }
+                                        dialog({
+                                            title: '复制已有数据追踪',
+                                            content: '<select id="title" class="form-control">' + options + '</select><select id="trace" class="form-control"></select>',
+                                            onshow: function() {
+                                                var $content = this._$('content');
+                                                var $trace = $content.find('#trace');
+
+                                                $content.find('#title').change(function() {
+                                                    var value = $(this).val();
+                                                    if(data[value]) {
+                                                        $trace.empty();
+                                                        for(var key in data[value]) {
+                                                            $trace.append('<option value="' + key + '">' + key + '</option>')
+                                                        }
+                                                    }
+                                                });
+                                            },
+                                            ok: function() {
+                                                var $content = this._$('content');
+                                                var $trace = $content.find('#trace');
+                                                var $title = $content.find('#title');
+                                                var trace = $trace.val();
+                                                var title = $title.val();
+                                                $.post('/tools/dbSaveTrace', {table: id, title: trace, traces: JSON.stringify(data[title][trace])}, function() {
+                                                    MU.ui.Message.alert('保存成功！');
+                                                });
+                                            }
+                                        }).show();
+                                    });
+                                }
+                            },
+                            {
+                                value: '保存',
+                                callback: function() {
+                                    var $content = this._$('content');
+                                    var traces = [];
+
+                                    var $a = $content.find('ul.nav-tabs li.active a');
+                                    var title = $a.text();
+                                    var tab_id = $a.attr('href');
+                                    $content.find(tab_id).find('ul > li').each(function() {
+                                        var table = $(this).find('input.table').val();
+                                        var columns = [];
+                                        $(this).find('ol li').each(function() {
+                                            var column = $(this).find('input.column').val();
+                                            var valueColumn = $(this).find('input.valueColumn').val();
+                                            columns.push({column: column, valueColumn: valueColumn});
+                                        });
+                                        traces.push({table: table, columns: columns});
+                                    });
+                                    $.post('/tools/dbSaveTrace', {table: id, title: title, traces: JSON.stringify(traces)}, function() {
+                                        MU.ui.Message.alert('保存成功！');
+                                    });
+
+                                    return false;
+                                }
+                            },
+                            {
+                                value: '追踪',
+                                callback: function() {
+                                    var $content = this._$('content');
+                                    window.open('/tools/dbTrace?table=' + id + '&pkColName=' + crud.dataTable().getPkColNames() + '&title=' + $content.find('ul.nav-tabs li.active a').text() + '&data=' + JSON.stringify(selectedData));
+                                }
+                            }
+                        ],
                         onshow: function() {
                             var $content = this._$('content');
+
+                            // 注册事件
+                            // 添加表
+                            $content.on('click', 'a.addTable', function() {
+                                var $table = $(template('tpl_dbTrace_table', {}));
+                                $(this).parent().after($table);
+                            });
+                            // 删除表
+                            $content.on('click', 'a.deleteTable', function() {
+                                $(this).parent().remove();
+                            });
+                            // 向上移动表
+                            $content.on('click', 'a.upTable', function() {
+                                var $ul = $(this).parent();
+                                $ul.insertBefore($ul.prev());
+                            });
+                            // 向下移动表
+                            $content.on('click', 'a.downTable', function() {
+                                var $ul = $(this).parent();
+                                $ul.insertAfter($ul.next());
+                            });
+                            // 添加列
+                            $content.on('click', 'a.addColumn', function() {
+                                var $table = $(template('tpl_dbTrace_column', {}));
+                                $(this).parent().after($table);
+                            });
+                            // 删除列
+                            $content.on('click', 'a.deleteColumn', function() {
+                                $(this).parent().remove();
+                            });
+                            // 向上移动列
+                            $content.on('click', 'a.upColumn', function() {
+                                var $li = $(this).parent();
+                                $li.insertBefore($li.prev());
+                            });
+                            // 向下移动表
+                            $content.on('click', 'a.downColumn', function() {
+                                var $li = $(this).parent();
+                                $li.insertAfter($li.next());
+                            });
 
                             // 增加
                             $content.find('#btnDbAddTrace').click(function() {
@@ -346,7 +468,6 @@ Tools.DB = function() {
                                 var $tab = $(template('tpl_dbTrace_tab', {title: name}));
                                 $tabs.prepend($tab);
 
-                                // 添加表
 
                             }
                         }
@@ -517,7 +638,7 @@ Tools.DB = function() {
                         }).show();
                     });
 
-                    $.post('/tools/dbGetFkRefCol', {table: id}, function(data) {
+                    $.post('/tools/dbGetTraceConfig', {table: id}, function(data) {
                         if(data) {
                             for(var key in data) {
                                 if(data.hasOwnProperty(key)) {

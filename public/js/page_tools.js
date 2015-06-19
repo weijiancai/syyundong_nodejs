@@ -4,7 +4,7 @@ var Tools = {
 
 $(function() {
     var switchTab = new MU.ui.SwitchTab($('ul.page-sidebar-menu'));
-    var isFtpInit = false, isDbInit = false, isTplInit = false;
+    var isFtpInit = false, isDbInit = false, isTplInit = false, isEctongs = false;
 
     switchTab.onSelect(function($now, $old, $target){
         $now.append('<span class="selected"></span>');
@@ -29,6 +29,11 @@ $(function() {
                 Tools.tpl.init();
             }
             isTplInit = true;
+        } else if(targetId == 'desktop_ectongs') {
+            if(!isEctongs) {
+                Tools.ectongs.init();
+            }
+            isEctongs = true;
         }
     });
 

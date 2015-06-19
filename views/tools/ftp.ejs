@@ -11,7 +11,7 @@
                     <li><a id="goToParent" href="javascript:void(0)"><span class="icon-reply"></span> 上一级</a></li>
                     <li><a id="refreshPath" href="javascript:void(0)"><span class="glyphicon glyphicon-refresh"></span> 刷新</a></li>
                     <li><a href="javascript:void(0)" data-toggle="modal" data-target="#ftpFileUploadDialog"><span class="glyphicon glyphicon-upload"></span> 上传</a></li>
-                </ul>
+                </ul>m
             </div>
             <div class="panel-body">
                 <table id="ftpTable" style="width: 100%;"></table>
@@ -20,12 +20,13 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3>剪贴板</h3>
+                剪贴板
             </div>
             <div class="panel-body">
-                <textarea class="form-control" style="height: 300px;" ng-model="temp_text"></textarea>
+                <textarea id="ftpClipboardContent" class="form-control" style="height: 300px;"></textarea>
                 <div class="text-center">
-                    <button type="button" class="btn btn-default" ng-click="ftp.storeFile()">保存</button>
+                    <button id="btnFtpSaveClipboard" type="button" class="btn btn-primary">保存</button>
+                    <button id="btnFtpGetClipboard" type="button" class="btn btn-default">获取</button>
                 </div>
             </div>
         </div>

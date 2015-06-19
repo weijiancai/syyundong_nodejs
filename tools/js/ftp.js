@@ -148,5 +148,20 @@ Tools.ftp = {
                 $.danidemo.addLog('#demo-debug', 'info', 'Browser not supported(do something else here!): ' + message);
             }
         });
+
+        // 保存剪贴板
+        $('#btnFtpSaveClipboard').click(function() {
+            var content = $('#ftpClipboardContent').val();
+            var path = "/wei_jc";
+            $.post('/tools/ftpClipboard', {path: path, content: content}, function() {
+                MU.ui.Message.alert('保存成功！');
+            });
+        });
+        // 查询剪贴板
+        $('#btnFtpGetClipboard').click(function() {
+            $.get('/tools/ftpGetClipboard', function(data) {
+                $('#ftpClipboardContent').val(data);
+            });
+        });
     }
 };

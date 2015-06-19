@@ -1,6 +1,7 @@
 var dbo = require('./../routes/dbo');
 var db = require('../lib/db');
 var config = require('../lib/config');
+var util = require('../lib/util');
 var async = require('async');
 var express = require('express');
 var request = require('request');
@@ -49,7 +50,37 @@ router.post('/edit', function(req, res, next) {
                     metaConfig.sort(function(a, b) {
                         return a.sortNum - b.sortNum;
                     });
+                } else if(column == 'fkDisplayCol' && metaConfig[i]['fkCol']) { // 外键列， 新增一列：引用列
+                    var obj = util.extend({}, metaConfig[i]);
+                    obj.fkCol = null;
+                    obj.fkDisplayCol = null;
+                    obj.isFk = false;
+                    obj.isPk = false;
+                    obj.name = metaConfig[i]['fkCol'].split('.')[0] + '_' + metaConfig[i]['fkDisplayCol'];
+                    obj.displayName = metaConfig[i]['fkDisplayCol'];
+                    obj.sortNum = metaConfig[i]['sortNum'] + 2;
+                    var ids = metaConfig[i]['id'].split('.');
+                    obj.id = '$$' + ids[0] + '.' + ids[1] + '.' + metaConfig[i]['fkCol'].split('.')[0] + '.' + metaConfig[i]['fkDisplayCol'];
+                    obj.tip = '';
+                    var idx = -1;
+                    for(var j = 0; j < metaConfig.length; j++) {
+                        if(metaConfig[j]['id'] == id) {
+                            idx = j;
+                            break;
+                        }
+                    }
+                    if(idx > -1) {
+                        metaConfig.splice(idx, 1, obj);
+                    } else {
+                        metaConfig.push(obj);
+                    }
+
+                    // 排序
+                    metaConfig.sort(function(a, b) {
+                        return a.sortNum - b.sortNum;
+                    });
                 }
+
                 config.save();
                 break;
             }
