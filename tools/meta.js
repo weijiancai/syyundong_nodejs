@@ -102,5 +102,64 @@ router.post('/resetSortNum', function(req, res, next) {
     res.send();
 });
 
+router.post('/query', function(req, res, next) {
+    var id = req.body.id || req.query.id;
+    var start = req.body.start || 0; // 第几页
+    var length = req.body.length || 10; // 每页行数
+    var pkColName = req.body.pk;
+    var conditions = req.body.conditions;
+
+    var datasource = id.split('.')[0];
+    var ds = config.getDataSource(datasource, id.split('.')[1]);
+    db.setDataSource(ds);
+
+    var tableName = id.substr(datasource.length + 1);
+    if(ds.dbType == 'sqlServer') {
+        tableName = tableName.replace('.', '.dbo.');
+    }
+    var sql = sqlBuilder.create().query().from(tableName).addConditions(conditions);
+    // 列信息
+    var metaConfig = config.getMetaConfig(id);
+    if(metaConfig) {
+        for(var j = 0; j < metaConfig.length; j++) {
+            var col = metaConfig[j];
+            if(col.id.substr(0, 2) == '$$') continue;
+
+            sql.query(col.name);
+            if(col.isFk && col.fkCol && col.fkDisplayCol) {
+                var strs = col.fkCol.split('.');
+                sql.query("(SELECT " + col.fkDisplayCol + " FROM " + strs[0]+ " WHERE " + col.fkCol + "=" + (tableName + "." + col.name) + ") " + strs[0] + "_" + col.fkDisplayCol);
+            }
+        }
+    }
+    // 排序
+    var orderBy = '';
+    var i = 0, k = 0;
+    while(true) {
+        var orderKey = 'order[' + i + '][column]';
+        if(!req.body[orderKey]) {
+            break;
+        }
+        var colKey = 'columns[' + req.body[orderKey] + '][data]';
+        var orderable = req.body['columns[' + req.body[orderKey] + '][orderable]'];
+        if(orderable == 'true') {
+            var colName = req.body[colKey];
+            var dir = req.body['order[' + i + '][dir]'];
+            //sql.order(colName + ' ' + dir);
+            if(k > 0) {
+                orderBy += ', ';
+            }
+            orderBy += colName + ' ' + dir;
+            k++;
+        }
+
+        i++;
+    }
+    db.queryByPage(sql.build(), start, length, function(data) {
+        data.draw = parseInt(req.body.draw) || 1;
+        res.send(data);
+    }, tableName, pkColName.split(',')[0], orderBy);
+});
+
 
 module.exports = router;

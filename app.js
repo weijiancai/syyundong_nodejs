@@ -20,6 +20,7 @@ var admin = require('./routes/admin');
 var tools = require('./tools/route');
 var meta = require('./tools/meta');
 var dict = require('./tools/dict');
+var test = require('./routes/test');
 
 var app = express();
 
@@ -64,6 +65,7 @@ app.use('/admin', admin);
 app.use('/tools', tools);
 app.use('/meta', meta);
 app.use('/dict', dict);
+app.use('/test', test);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

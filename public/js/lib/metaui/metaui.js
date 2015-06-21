@@ -79,6 +79,10 @@ MU.ui.DataTable = function($container, $toolbar) {
         }],
         "initComplete": function(setting) {
             console.log('initComplete......');
+            // 记录行号
+            $container.find('tbody > tr').each(function(idx) {
+                $(this).data('rowNumber', idx);
+            });
         }
     };
 
@@ -88,7 +92,6 @@ MU.ui.DataTable = function($container, $toolbar) {
             var $con = $(dt.table().container());
             var $headers = $con.find('th');
             $headers.eq(0).removeClass('sorting_asc').css({paddingLeft: '10px', paddingRight: '10px'});
-            $con.find("select, input, a.button, button").uniform();
 
             // header提示
             $headers.each(function(idx) {
@@ -220,7 +223,9 @@ MU.ui.DataTable = function($container, $toolbar) {
         console.log('init end');
     }).on('preXhr.dt', function (e, settings, data ) { // 发送ajax请求前
         if(data) {
-            $.extend(data, option.ajax.data);
+            if(option.ajax) {
+                $.extend(data, option.ajax.data);
+            }
             if(onAjaxPre) {
                 onAjaxPre(data);
             }
@@ -308,7 +313,7 @@ MU.ui.DataTable = function($container, $toolbar) {
         // 序号列
         columns.unshift({
             "render": function ( data, type, row, meta) {
-                return '<div>' + (meta.row + 1) + '</div>';
+                return '<div data-column-name="_orderNum_">' + (meta.row + 1) + '</div>';
             },
             data: '_orderNum_',
             title: '',
@@ -327,7 +332,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                     return '<input type="checkbox" class="checkboxes" ' + check + '/>';
                 },
                 data: '_checked_',
-                title: '<input type="checkbox" class="group-checkable" data-set=".checkboxes" />',
+                title: '<div data-column-name="_checked_"><input type="checkbox" class="group-checkable" data-set=".checkboxes" /></div>',
                 orderable: false,
                 editable: false, // 不可编辑
                 //width: 1,
@@ -345,7 +350,7 @@ MU.ui.DataTable = function($container, $toolbar) {
                 }
                 columns[i].render = (function(currentCol) {
                     return function(data) {
-                        var $div = $('<div></div>');
+                        var $div = $('<div data-column-name="' + currentCol.data + '"></div>');
                         if(!MU.UString.isEmpty(currentCol.dict) && currentCol.dict != 'noSelectValue') {
                             var clazz = currentCol.dict + ' ' + currentCol.dict + '_' + data;
                             var codeValue = MU.Dict.getCode(currentCol.dict)[data];
@@ -380,6 +385,10 @@ MU.ui.DataTable = function($container, $toolbar) {
 
     this.setMetaId = function(id) {
         metaId = id;
+        this.setUrl('/meta/query', {id: id});
+        this.onAjaxPre(function(data) {
+            data['pk'] = self.getPkColNames();
+        });
     };
 
     this.applyOption = function(settings) {
@@ -419,7 +428,7 @@ MU.ui.DataTable = function($container, $toolbar) {
             }
         }*/
         // 重置列排序
-        dt.colReorder.reset();
+        //dt.colReorder.reset();
 
         // ====== 安装扩展
         // 列可拖动
@@ -676,6 +685,21 @@ MU.ui.DataTable = function($container, $toolbar) {
     };
 
     /**
+     * 根据列名获得列信息
+     *
+     * @param colName
+     * @returns {*}
+     */
+    this.getColumn = function(colName) {
+        for(var i = 0; i < option.columns.length; i++) {
+            if(option.columns[i].data == colName) {
+                return option.columns[i];
+            }
+        }
+        return null;
+    };
+
+    /**
      * 设置单元格的值
      *
      * @param row 行
@@ -922,8 +946,9 @@ MU.ui.DataTable = function($container, $toolbar) {
         if((sourceRowNum == 0 && !isDown) || targetRowNum == data.length - 1 && isDown) {
             return [sourceData, targetData];
         }
-
+        console.log(data);
         if(cols && cols.length > 0) {
+            // 交换数据
             for(var i = 0; i < cols.length; i++) {
                 var col = cols[i];
                 var temp = sourceData[col];
@@ -933,18 +958,21 @@ MU.ui.DataTable = function($container, $toolbar) {
         }
         //data.splice(sourceRowNum, 1, targetData);
         //data.splice(targetRowNum, 1, sourceData);
-
-        var $source = $(dt.row(sourceRowNum).node());
-        var $target = $(dt.row(targetRowNum).node());
+        //$trs = $container.find('tbody > tr');
+        //var $source = $trs.eq(sourceRowNum);
+        //var $target = $trs.eq(targetRowNum);
+        // 移动位置
         if(isDown) {
-            $source.insertAfter($target);
+            //$source.insertAfter($target);
             data.splice(targetRowNum + 1, 0, sourceData);
             data.splice(sourceRowNum, 1);
+            //$target.data('rowNumber', targetRowNum - 1);
+            //$source.data('rowNumber', targetRowNum);
         } else {
-            $source.insertBefore($target);
+            //$source.insertBefore($target);
         }
-        /*dt.clear();
-        dt.rows.add(data).draw();*/
+        dt.clear();
+        dt.rows.add(data).draw();
 
         return [sourceData, targetData];
     };
