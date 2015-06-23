@@ -742,7 +742,7 @@ Tools.DB = function() {
         var dt = crud.dataTable();
         dt.setHeight(400);
         //dt.setColumns($.extend([], columns));
-        dt.setMetaId(id);
+        dt.setMetaId(id, false);
         dt.setUrl('/tools/dbRetrieve?id=' + id);
         dt.setEditable(true, '/tools/dbEditTable', {table: id});
         dt.setDeleteUrl('/tools/dbDeleteTableRow', {table: id});

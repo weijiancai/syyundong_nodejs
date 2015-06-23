@@ -383,12 +383,14 @@ MU.ui.DataTable = function($container, $toolbar) {
         }
     };
 
-    this.setMetaId = function(id) {
+    this.setMetaId = function(id, isSetMetaUrl) {
         metaId = id;
-        this.setUrl('/meta/query', {id: id});
-        this.onAjaxPre(function(data) {
-            data['pk'] = self.getPkColNames();
-        });
+        if(isSetMetaUrl) {
+            this.setUrl('/meta/query', {id: id});
+            this.onAjaxPre(function(data) {
+                data['pk'] = self.getPkColNames();
+            });
+        }
     };
 
     this.applyOption = function(settings) {

@@ -17,7 +17,8 @@
             if(!data) {
                 var dt = new MU.ui.DataTable($this);
                 var metaId = $this.data('meta') || option.meta;
-                dt.setMetaId(metaId);
+                option.serverSide = !option.data;
+                dt.setMetaId(metaId, !option.data);
                 dt.applyOption(option);
 
                 $this.data('mu.dataTable', dt);

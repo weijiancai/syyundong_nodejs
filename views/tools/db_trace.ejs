@@ -72,24 +72,8 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 
     <% if(obj.data && obj.data.length > 0) { %>
     <div class="col-md-12" style="overflow: auto;">
-	<table>
-		<thead>
-		<tr>
-			<% for(var key in obj.data[0]) { %>
-			<th><%= key %></th>
-			<%}%>
-		</tr>
-		</thead>
-		<tbody>
-		<% if(obj.data && obj.data.length > 0) for(var j = 0; j < obj.data.length; j++) {
-		%>
-		<tr>
-		<% for(key in obj.data[j]) { %>
-		<td><%= obj.data[j][key] %></td>
-		<%}%>
-		</tr>
-		<%}%>
-		</tbody>
+	<table id="table_<%= i %>">
+
 	</table>
     </div>
     <%}%>
@@ -153,7 +137,9 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 <script type="text/javascript" src="/public/js/lib/jeditable/jquery.jeditable.datetimepicker.js"></script>
 <script type="text/javascript" src="/public/js/lib/jquery-shortcuts/jquery.shortcuts.js"></script>
 <script src="/public/js/lib/metaui/commen.js" type="text/javascript"></script>
+<script src="/public/js/lib/metaui/dict.js" type="text/javascript"></script>
 <script src="/public/js/lib/metaui/metaui.js" type="text/javascript"></script>
+<script src="/public/js/lib/metaui/jqmetaui.js" type="text/javascript"></script>
 <script src="/public/js/lib/template.js" type="text/javascript"></script>
 <script src="/public/js/page_tools.js" type="text/javascript"></script>
 <script src="/tools/js/ftp.js" type="text/javascript"></script>
@@ -164,43 +150,12 @@ Purchase: http://themeforest.net/item/metronic-responsive-admin-dashboard-templa
 
 <script>
 	$(function() {
-		/*$('table').each(function() {
-            $(this).DataTable({
-                "searching": false,
-                "lengthChange": false,
-                "processing": true,
-                "serverSide": false, // 服务器端排序
-                "paginate": true, // 分页
-                "info": false,
-                //"paginationType": "bootstrap",
-                //"scrollX": true,
-                "columns": [],
-                "ajax": {url: '', type: 'POST', data: {}},
-                //"retrieve": true,
-                "destroy": true,
-                "dom": 'Rlfrtip', // 列可拖动
-                stateSave: true, // 保存列拖动后的设置
-                "initComplete": function(setting) {
-
-                }
-            });
-        });*/
-
-        $('table').dataTable({
-            "searching": false,
-            "lengthChange": false,
-            "processing": true,
-            "serverSide": false, // 服务器端排序
-            "paginate": false, // 分页
-            "info": false,
-            //"retrieve": true,
-            "destroy": true,
-            "dom": 'Rlfrtip', // 列可拖动
-            stateSave: true, // 保存列拖动后的设置
-            "initComplete": function(setting) {
-
-            }
-        });
+        // - 防止转义
+        var result = <%- JSON.stringify(result) %>;
+        for(var i = 0; i < result.length; i++) {
+            var obj = result[i];
+            $('#table_' + i).muDataTable({meta: obj.table, data: obj.data, paginate: false});
+        }
 	})
 </script>
 
