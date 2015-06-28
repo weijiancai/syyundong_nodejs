@@ -58,6 +58,7 @@ MU.ui.DataTable = function($container, $toolbar) {
     var onAjaxPre; // ajax发送请求之前回调
 
     var option = {
+        autoWidth: false,
         "searching": false,
         "lengthChange": false,
         "processing": true,
